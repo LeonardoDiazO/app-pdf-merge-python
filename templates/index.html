@@ -1,108 +1,30 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>PDF Tools</title>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+  <title>¿Cómo funciona PDF Tools?</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
-
-  <!-- ✅ NAVBAR FIJO -->
   <nav class="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
       <div class="text-xl font-bold text-blue-600">PDF Tools</div>
       <div class="flex space-x-4">
-        <a href="/" class="text-blue-600 font-semibold border-b-2 border-blue-600">Unir PDF</a>
-        <a href="/eliminar" class="text-gray-600 hover:text-blue-600 hover:border-b-2 hover:border-blue-600">Eliminar páginas PDF</a>
+        <a href="/unir" class="text-gray-600 hover:text-blue-600 hover:border-b-2 hover:border-blue-600">Unir PDF</a>
+        <a href="/eliminar" class="text-gray-600 hover:text-blue-600 hover:border-b-2 hover:border-blue-600">Eliminar páginas</a>
+        <a href="/" class="text-gray-600 hover:text-blue-600 hover:border-b-2 hover:border-blue-600">Inicio</a>
       </div>
     </div>
   </nav>
-
-  <!-- ✅ CONTENIDO -->
-  <main class="pt-24 px-4">
-    <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-2xl mx-auto">
-      <h2 class="text-2xl font-bold text-center mb-6 text-gray-700">Unir archivos PDF</h2>
-
-      <form id="pdfForm" action="/" method="POST" enctype="multipart/form-data" class="space-y-4">
-        <input type="file" id="pdfFiles" name="pdfs" multiple required accept="application/pdf"
-               class="w-full border rounded-lg px-4 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
-
-        <ul id="file-list" class="list-none p-0 space-y-2"></ul>
-
-        <input type="hidden" name="order" id="orderInput">
-
-        <div class="flex justify-end space-x-3">
-          <button type="submit"
-                  class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-            Unir PDF
-          </button>
-          <button type="button" id="clearBtn"
-                  class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition">
-            Limpiar
-          </button>
-        </div>
-      </form>
-    </div>
+  <main class="pt-24 px-6 max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">¿Cómo funciona PDF Tools?</h1>
+    <p class="text-gray-700 mb-4">Esta herramienta te permite unir múltiples archivos PDF o eliminar páginas específicas de un archivo. Todo el procesamiento se realiza temporalmente y los archivos no se almacenan.</p>
+    <ul class="list-disc list-inside text-gray-700">
+      <li>✔️ Procesamiento en el navegador y servidor.</li>
+      <li>✔️ Archivos no se guardan permanentemente.</li>
+      <li>✔️ Interfaz simple y responsiva.</li>
+    </ul>
   </main>
-
-  <!-- ✅ JS PARA ORDENAR Y LIMPIAR -->
-  <script>
-    const input = document.getElementById("pdfFiles");
-    const fileList = document.getElementById("file-list");
-    const orderInput = document.getElementById("orderInput");
-    const clearBtn = document.getElementById("clearBtn");
-
-    let filesArray = [];
-
-    input.addEventListener("change", function () {
-      filesArray = Array.from(input.files);
-      renderFileList();
-    });
-
-    function renderFileList() {
-      fileList.innerHTML = "";
-      filesArray.forEach((file, index) => {
-        const li = document.createElement("li");
-        li.textContent = file.name;
-        li.dataset.index = index;
-        li.className = "bg-gray-50 border px-4 py-2 rounded cursor-move shadow-sm";
-        fileList.appendChild(li);
-      });
-
-      Sortable.create(fileList, {
-        animation: 150,
-        onEnd: function () {
-          updateOrderInput();
-        }
-      });
-
-      updateOrderInput();
-    }
-
-    function updateOrderInput() {
-      const order = [];
-      document.querySelectorAll("#file-list li").forEach(li => {
-        order.push(li.dataset.index);
-      });
-      orderInput.value = order.join(",");
-    }
-
-    clearBtn.addEventListener("click", () => {
-      document.getElementById("pdfForm").reset();
-      fileList.innerHTML = "";
-      orderInput.value = "";
-      filesArray = [];
-    });
-
-    document.getElementById("pdfForm").addEventListener("submit", () => {
-      setTimeout(() => {
-        document.getElementById("pdfForm").reset();
-        fileList.innerHTML = "";
-        orderInput.value = "";
-        filesArray = [];
-      }, 1000);
-    });
-  </script>
 </body>
 </html>
