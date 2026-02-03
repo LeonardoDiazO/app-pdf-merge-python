@@ -2,107 +2,251 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>PDF Tools</title>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Merger Tool</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="bg-gray-100 min-h-screen">
-
-  <!-- ✅ NAVBAR FIJO -->
-  <nav class="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      <div class="text-xl font-bold text-blue-600">PDF Tools</div>
-      <div class="flex space-x-4">
-        <a href="/unir" class="text-blue-600 font-semibold border-b-2 border-blue-600">Unir PDF</a>
-        <a href="/eliminar" class="text-gray-600 hover:text-blue-600 hover:border-b-2 hover:border-blue-600">Eliminar páginas PDF</a>
-        <a href="/" class="text-gray-600 hover:text-blue-600 hover:border-b-2 hover:border-blue-600">Inicio</a>
-      </div>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo-container">
+      <img src="{{ url_for('static', filename='images/flask-logo.svg') }}" alt="Flask" class="logo-icon">
+      <img src="{{ url_for('static', filename='images/python-logo.svg') }}" alt="Python" class="logo-icon">
     </div>
-  </nav>
+  </header>
 
-  <!-- ✅ CONTENIDO -->
-  <main class="pt-24 px-4">
-    <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-2xl mx-auto">
-      <h2 class="text-2xl font-bold text-center mb-6 text-gray-700">Unir archivos PDF</h2>
+  <!-- Main Container -->
+  <main class="main-container">
+    <h1 class="page-title">PDF Merger Tool</h1>
 
-      <form id="pdfForm" action="/" method="POST" enctype="multipart/form-data" class="space-y-4">
-        <input type="file" id="pdfFiles" name="pdfs" multiple required accept="application/pdf"
-               class="w-full border rounded-lg px-4 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-zone-icon">📄</div>
+      <div class="drop-zone-text">Click to select PDF files or drag and drop here</div>
+      <div class="drop-zone-subtext">You can select multiple files</div>
+    </div>
 
-        <ul id="file-list" class="list-none p-0 space-y-2"></ul>
+    <!-- Hidden File Input -->
+    <input type="file" 
+           id="fileInput" 
+           class="file-input-hidden" 
+           accept="application/pdf" 
+           multiple>
 
-        <input type="hidden" name="order" id="orderInput">
+    <!-- PDF Files Container -->
+    <div class="pdf-files-container" id="pdfFilesContainer"></div>
 
-        <div class="flex justify-end space-x-3">
-          <button type="submit"
-                  class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-            Unir PDF
-          </button>
-          <button type="button" id="clearBtn"
-                  class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition">
-            Limpiar
-          </button>
-        </div>
-      </form>
+    <!-- Merge Button -->
+    <div class="merge-button-container">
+      <button class="merge-button" id="mergeButton" disabled>
+        Merge PDFs
+      </button>
     </div>
   </main>
 
-  <!-- ✅ JS PARA ORDENAR Y LIMPIAR -->
   <script>
-    const input = document.getElementById("pdfFiles");
-    const fileList = document.getElementById("file-list");
-    const orderInput = document.getElementById("orderInput");
-    const clearBtn = document.getElementById("clearBtn");
-
+    // DOM Elements
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const pdfFilesContainer = document.getElementById('pdfFilesContainer');
+    const mergeButton = document.getElementById('mergeButton');
+    
     let filesArray = [];
 
-    input.addEventListener("change", function () {
-      filesArray = Array.from(input.files);
-      renderFileList();
+    // Click to select files
+    dropZone.addEventListener('click', () => {
+      fileInput.click();
     });
 
-    function renderFileList() {
-      fileList.innerHTML = "";
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
+
+    // Drag and drop events
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      handleFiles(e.dataTransfer.files);
+    });
+
+    // Handle files
+    function handleFiles(files) {
+      const pdfFiles = Array.from(files).filter(file => file.type === 'application/pdf');
+      
+      if (pdfFiles.length === 0) {
+        alert('Please select only PDF files');
+        return;
+      }
+
+      filesArray = [...filesArray, ...pdfFiles];
+      renderFiles();
+    }
+
+    // Render files
+    function renderFiles() {
+      pdfFilesContainer.innerHTML = '';
+      
+      if (filesArray.length === 0) {
+        mergeButton.disabled = true;
+        return;
+      }
+
       filesArray.forEach((file, index) => {
-        const li = document.createElement("li");
-        li.textContent = file.name;
-        li.dataset.index = index;
-        li.className = "bg-gray-50 border px-4 py-2 rounded cursor-move shadow-sm";
-        fileList.appendChild(li);
+        const card = createPdfCard(file, index);
+        pdfFilesContainer.appendChild(card);
       });
 
-      Sortable.create(fileList, {
-        animation: 150,
-        onEnd: function () {
-          updateOrderInput();
+      mergeButton.disabled = filesArray.length < 2;
+    }
+
+    // Create PDF card
+    function createPdfCard(file, index) {
+      const card = document.createElement('div');
+      card.className = 'pdf-card';
+      card.draggable = true;
+      card.dataset.index = index;
+
+      const sizeInKB = (file.size / 1024).toFixed(1);
+      const sizeText = sizeInKB > 1024 
+        ? `${(sizeInKB / 1024).toFixed(1)} MB` 
+        : `${sizeInKB} KB`;
+
+      card.innerHTML = `
+        <div class="pdf-icon"></div>
+        <div class="pdf-info">
+          <div class="pdf-filename" title="${file.name}">${file.name}</div>
+          <div class="pdf-size">${sizeText}</div>
+        </div>
+        <div class="reorder-controls">
+          <button class="reorder-btn" onclick="moveUp(${index})" ${index === 0 ? 'disabled' : ''}>
+            ↑
+          </button>
+          <button class="reorder-btn" onclick="moveDown(${index})" ${index === filesArray.length - 1 ? 'disabled' : ''}>
+            ↓
+          </button>
+        </div>
+      `;
+
+      // Drag events
+      card.addEventListener('dragstart', (e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', index);
+        card.classList.add('dragging');
+      });
+
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+      });
+
+      card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const draggingCard = document.querySelector('.dragging');
+        if (draggingCard && draggingCard !== card) {
+          const rect = card.getBoundingClientRect();
+          const midpoint = rect.top + rect.height / 2;
+          if (e.clientY < midpoint) {
+            card.parentNode.insertBefore(draggingCard, card);
+          } else {
+            card.parentNode.insertBefore(draggingCard, card.nextSibling);
+          }
         }
       });
 
-      updateOrderInput();
-    }
-
-    function updateOrderInput() {
-      const order = [];
-      document.querySelectorAll("#file-list li").forEach(li => {
-        order.push(li.dataset.index);
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        updateFilesOrder();
       });
-      orderInput.value = order.join(",");
+
+      return card;
     }
 
-    clearBtn.addEventListener("click", () => {
-      document.getElementById("pdfForm").reset();
-      fileList.innerHTML = "";
-      orderInput.value = "";
-      filesArray = [];
-    });
+    // Move file up
+    function moveUp(index) {
+      if (index > 0) {
+        [filesArray[index], filesArray[index - 1]] = [filesArray[index - 1], filesArray[index]];
+        renderFiles();
+      }
+    }
 
-    document.getElementById("pdfForm").addEventListener("submit", () => {
-      setTimeout(() => {
-        document.getElementById("pdfForm").reset();
-        fileList.innerHTML = "";
-        orderInput.value = "";
-        filesArray = [];
-      }, 1000);
+    // Move file down
+    function moveDown(index) {
+      if (index < filesArray.length - 1) {
+        [filesArray[index], filesArray[index + 1]] = [filesArray[index + 1], filesArray[index]];
+        renderFiles();
+      }
+    }
+
+    // Update files order after drag and drop
+    function updateFilesOrder() {
+      const cards = Array.from(pdfFilesContainer.children);
+      const newOrder = cards.map(card => parseInt(card.dataset.index));
+      filesArray = newOrder.map(i => filesArray[i]);
+      renderFiles();
+    }
+
+    // Merge PDFs
+    mergeButton.addEventListener('click', async () => {
+      if (filesArray.length < 2) {
+        alert('Please select at least 2 PDF files');
+        return;
+      }
+
+      mergeButton.disabled = true;
+      mergeButton.textContent = 'Merging...';
+      mergeButton.classList.add('loading');
+
+      const formData = new FormData();
+      filesArray.forEach((file, index) => {
+        formData.append('pdfs', file);
+      });
+      
+      // Send order as comma-separated indices
+      const order = filesArray.map((_, i) => i).join(',');
+      formData.append('order', order);
+
+      try {
+        const response = await fetch('/unir', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'merged_output.pdf';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+
+          // Reset
+          filesArray = [];
+          fileInput.value = '';
+          renderFiles();
+          alert('PDFs merged successfully!');
+        } else {
+          const errorText = await response.text();
+          alert('Error merging PDFs: ' + errorText);
+        }
+      } catch (error) {
+        alert('Error merging PDFs: ' + error.message);
+      } finally {
+        mergeButton.disabled = false;
+        mergeButton.textContent = 'Merge PDFs';
+        mergeButton.classList.remove('loading');
+      }
     });
   </script>
 </body>
