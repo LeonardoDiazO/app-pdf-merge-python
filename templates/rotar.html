@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotar Páginas PDF</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        .rotate-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .rotate-option {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem 2rem;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .rotate-option:hover {
+            border-color: #3b82f6;
+            box-shadow: var(--shadow-md);
+        }
+
+        .rotate-option.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .rotate-icon {
+            font-size: 2rem;
+        }
+
+        .rotate-label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .page-preview {
+            position: relative;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            transition: all var(--transition-normal);
+            cursor: pointer;
+            background: white;
+        }
+
+        .page-preview:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .page-preview.selected {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .page-preview canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform var(--transition-normal);
+        }
+
+        .page-preview.rotate-90 canvas {
+            transform: rotate(90deg) scale(0.7);
+        }
+
+        .page-preview.rotate-180 canvas {
+            transform: rotate(180deg);
+        }
+
+        .page-preview.rotate-270 canvas {
+            transform: rotate(270deg) scale(0.7);
+        }
+
+        .page-checkbox {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .rotate-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 1.25rem 4rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            box-shadow: var(--shadow-lg);
+            text-transform: uppercase;
+        }
+
+        .rotate-button:hover {
+            background: #2563eb;
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-2px);
+        }
+
+        .rotate-button:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .instructions {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .select-all-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+            margin-bottom: 1rem;
+        }
+
+        .select-all-btn:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/flask-logo.svg') }}" alt="Flask" class="logo-icon">
+            <img src="{{ url_for('static', filename='images/python-logo.svg') }}" alt="Python" class="logo-icon">
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <a href="/" class="back-link"
+            style="display: inline-block; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem;">←
+            Volver al inicio</a>
+
+        <h1 class="page-title">🔄 Rotar Páginas PDF</h1>
+
+        <div class="instructions">
+            📌 Sube un archivo PDF, selecciona las páginas que deseas rotar y elige el ángulo de rotación.
+            Puedes rotar todas las páginas o solo algunas.
+        </div>
+
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">📄</div>
+            <div class="drop-zone-text">Click para seleccionar un archivo PDF</div>
+            <div class="drop-zone-subtext">O arrastra y suelta aquí</div>
+        </div>
+
+        <!-- Hidden File Input -->
+        <input type="file" id="fileInput" class="file-input-hidden" accept="application/pdf">
+
+        <!-- Rotation Controls -->
+        <div id="rotationSection" style="display: none;">
+            <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--text-primary);">Selecciona el ángulo de
+                rotación</h3>
+            <div class="rotate-controls">
+                <div class="rotate-option" data-rotation="90">
+                    <div class="rotate-icon">↻</div>
+                    <div class="rotate-label">90° Derecha</div>
+                </div>
+                <div class="rotate-option selected" data-rotation="180">
+                    <div class="rotate-icon">↻↻</div>
+                    <div class="rotate-label">180°</div>
+                </div>
+                <div class="rotate-option" data-rotation="270">
+                    <div class="rotate-icon">↺</div>
+                    <div class="rotate-label">90° Izquierda</div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 1rem 0;">
+                <button class="select-all-btn" id="selectAllBtn">Seleccionar todas las páginas</button>
+            </div>
+
+            <!-- Preview Grid -->
+            <div class="preview-grid" id="previewGrid"></div>
+
+            <!-- Rotate Button -->
+            <div class="merge-button-container">
+                <button class="rotate-button" id="rotateButton" disabled>
+                    Rotar Páginas Seleccionadas
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewGrid = document.getElementById('previewGrid');
+        const rotateButton = document.getElementById('rotateButton');
+        const rotationSection = document.getElementById('rotationSection');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+
+        let currentFile = null;
+        let selectedPages = new Set();
+        let selectedRotation = 180;
+        let allPageCheckboxes = [];
+
+        // Rotation option selection
+        document.querySelectorAll('.rotate-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.rotate-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedRotation = parseInt(option.dataset.rotation);
+                updatePreviewRotations();
+            });
+        });
+
+        // Select all button
+        selectAllBtn.addEventListener('click', () => {
+            const allSelected = selectedPages.size === allPageCheckboxes.length;
+            allPageCheckboxes.forEach((checkbox, index) => {
+                checkbox.checked = !allSelected;
+                togglePageSelection(index, !allSelected);
+                const container = checkbox.closest('.page-preview');
+                container.classList.toggle('selected', !allSelected);
+            });
+            selectAllBtn.textContent = allSelected ? 'Seleccionar todas las páginas' : 'Deseleccionar todas';
+        });
+
+        // Click to select file
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files[0]) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // Handle file
+        async function handleFile(file) {
+            if (file.type !== 'application/pdf') {
+                alert('Por favor selecciona un archivo PDF');
+                return;
+            }
+
+            currentFile = file;
+            selectedPages.clear();
+            previewGrid.innerHTML = '';
+            rotateButton.disabled = true;
+            rotationSection.style.display = 'block';
+            allPageCheckboxes = [];
+
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            const numPages = pdf.numPages;
+
+            for (let i = 1; i <= numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 0.8 });
+
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const context = canvas.getContext('2d');
+
+                await page.render({ canvasContext: context, viewport }).promise;
+
+                const container = document.createElement('div');
+                container.className = 'page-preview';
+                container.dataset.pageIndex = i - 1;
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'page-checkbox';
+                checkbox.dataset.pageIndex = i - 1;
+                allPageCheckboxes.push(checkbox);
+
+                const pageNumber = document.createElement('div');
+                pageNumber.className = 'page-number';
+                pageNumber.textContent = `Página ${i}`;
+
+                container.appendChild(checkbox);
+                container.appendChild(canvas);
+                container.appendChild(pageNumber);
+
+                // Click handler
+                container.addEventListener('click', (e) => {
+                    if (e.target !== checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    togglePageSelection(parseInt(container.dataset.pageIndex), checkbox.checked);
+                    container.classList.toggle('selected', checkbox.checked);
+                });
+
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    togglePageSelection(parseInt(container.dataset.pageIndex), checkbox.checked);
+                    container.classList.toggle('selected', checkbox.checked);
+                });
+
+                previewGrid.appendChild(container);
+            }
+        }
+
+        // Toggle page selection
+        function togglePageSelection(pageIndex, selected) {
+            if (selected) {
+                selectedPages.add(pageIndex);
+            } else {
+                selectedPages.delete(pageIndex);
+            }
+            rotateButton.disabled = selectedPages.size === 0;
+            updateSelectAllButton();
+        }
+
+        function updateSelectAllButton() {
+            const allSelected = selectedPages.size === allPageCheckboxes.length && allPageCheckboxes.length > 0;
+            selectAllBtn.textContent = allSelected ? 'Deseleccionar todas' : 'Seleccionar todas las páginas';
+        }
+
+        function updatePreviewRotations() {
+            document.querySelectorAll('.page-preview').forEach(preview => {
+                preview.classList.remove('rotate-90', 'rotate-180', 'rotate-270');
+                if (preview.classList.contains('selected')) {
+                    preview.classList.add(`rotate-${selectedRotation}`);
+                }
+            });
+        }
+
+        // Rotate pages
+        rotateButton.addEventListener('click', async () => {
+            if (!currentFile || selectedPages.size === 0) {
+                alert('Por favor selecciona al menos una página para rotar');
+                return;
+            }
+
+            rotateButton.disabled = true;
+            rotateButton.textContent = 'Procesando...';
+
+            const formData = new FormData();
+            formData.append('pdf', currentFile);
+            formData.append('pages', Array.from(selectedPages).join(','));
+            formData.append('rotation', selectedRotation);
+
+            try {
+                const response = await fetch('/rotar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'rotated_output.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    alert('Páginas rotadas exitosamente!');
+
+                    // Reset
+                    currentFile = null;
+                    selectedPages.clear();
+                    previewGrid.innerHTML = '';
+                    fileInput.value = '';
+                    rotationSection.style.display = 'none';
+                } else {
+                    const errorText = await response.text();
+                    alert('Error al rotar páginas: ' + errorText);
+                }
+            } catch (error) {
+                alert('Error al rotar páginas: ' + error.message);
+            } finally {
+                rotateButton.disabled = false;
+                rotateButton.textContent = 'Rotar Páginas Seleccionadas';
+            }
+        });
+    </script>
+</body>
+
+</html>

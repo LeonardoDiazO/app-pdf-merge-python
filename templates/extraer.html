@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extraer Páginas PDF</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .page-preview {
+            position: relative;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            transition: all var(--transition-normal);
+            cursor: pointer;
+            background: white;
+        }
+
+        .page-preview:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .page-preview.selected {
+            border-color: #a855f7;
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+        }
+
+        .page-preview canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .page-checkbox {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .extract-button {
+            background: #a855f7;
+            color: white;
+            border: none;
+            padding: 1.25rem 4rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            box-shadow: var(--shadow-lg);
+            text-transform: uppercase;
+        }
+
+        .extract-button:hover {
+            background: #9333ea;
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-2px);
+        }
+
+        .extract-button:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .instructions {
+            background: #faf5ff;
+            border-left: 4px solid #a855f7;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .select-all-btn {
+            background: #a855f7;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+            margin-bottom: 1rem;
+        }
+
+        .select-all-btn:hover {
+            background: #9333ea;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="app-header">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/flask-logo.svg') }}" alt="Flask" class="logo-icon">
+            <img src="{{ url_for('static', filename='images/python-logo.svg') }}" alt="Python" class="logo-icon">
+        </div>
+    </header>
+
+    <main class="main-container">
+        <a href="/"
+            style="display: inline-block; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem;">←
+            Volver al inicio</a>
+
+        <h1 class="page-title">📑 Extraer Páginas PDF</h1>
+
+        <div class="instructions">
+            📌 Sube un archivo PDF y selecciona las páginas que deseas extraer.
+            Se creará un nuevo PDF solo con las páginas seleccionadas.
+        </div>
+
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">📄</div>
+            <div class="drop-zone-text">Click para seleccionar un archivo PDF</div>
+            <div class="drop-zone-subtext">O arrastra y suelta aquí</div>
+        </div>
+
+        <input type="file" id="fileInput" class="file-input-hidden" accept="application/pdf">
+
+        <div id="previewSection" style="display: none;">
+            <div style="text-align: center; margin: 1rem 0;">
+                <button class="select-all-btn" id="selectAllBtn">Seleccionar todas las páginas</button>
+            </div>
+            <div class="preview-grid" id="previewGrid"></div>
+            <div class="merge-button-container">
+                <button class="extract-button" id="extractButton" disabled>
+                    Extraer Páginas Seleccionadas
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewGrid = document.getElementById('previewGrid');
+        const extractButton = document.getElementById('extractButton');
+        const previewSection = document.getElementById('previewSection');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+
+        let currentFile = null;
+        let selectedPages = new Set();
+        let allPageCheckboxes = [];
+
+        selectAllBtn.addEventListener('click', () => {
+            const allSelected = selectedPages.size === allPageCheckboxes.length;
+            allPageCheckboxes.forEach((checkbox, index) => {
+                checkbox.checked = !allSelected;
+                togglePageSelection(index, !allSelected);
+                const container = checkbox.closest('.page-preview');
+                container.classList.toggle('selected', !allSelected);
+            });
+            selectAllBtn.textContent = allSelected ? 'Seleccionar todas las páginas' : 'Deseleccionar todas';
+        });
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleFile(e.target.files[0]);
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+        });
+
+        async function handleFile(file) {
+            if (file.type !== 'application/pdf') {
+                alert('Por favor selecciona un archivo PDF');
+                return;
+            }
+
+            currentFile = file;
+            selectedPages.clear();
+            previewGrid.innerHTML = '';
+            extractButton.disabled = true;
+            previewSection.style.display = 'block';
+            allPageCheckboxes = [];
+
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            const numPages = pdf.numPages;
+
+            for (let i = 1; i <= numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 0.8 });
+
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const context = canvas.getContext('2d');
+
+                await page.render({ canvasContext: context, viewport }).promise;
+
+                const container = document.createElement('div');
+                container.className = 'page-preview';
+                container.dataset.pageIndex = i - 1;
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'page-checkbox';
+                checkbox.dataset.pageIndex = i - 1;
+                allPageCheckboxes.push(checkbox);
+
+                const pageNumber = document.createElement('div');
+                pageNumber.className = 'page-number';
+                pageNumber.textContent = `Página ${i}`;
+
+                container.appendChild(checkbox);
+                container.appendChild(canvas);
+                container.appendChild(pageNumber);
+
+                container.addEventListener('click', (e) => {
+                    if (e.target !== checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    togglePageSelection(parseInt(container.dataset.pageIndex), checkbox.checked);
+                    container.classList.toggle('selected', checkbox.checked);
+                });
+
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    togglePageSelection(parseInt(container.dataset.pageIndex), checkbox.checked);
+                    container.classList.toggle('selected', checkbox.checked);
+                });
+
+                previewGrid.appendChild(container);
+            }
+        }
+
+        function togglePageSelection(pageIndex, selected) {
+            if (selected) {
+                selectedPages.add(pageIndex);
+            } else {
+                selectedPages.delete(pageIndex);
+            }
+            extractButton.disabled = selectedPages.size === 0;
+            updateSelectAllButton();
+        }
+
+        function updateSelectAllButton() {
+            const allSelected = selectedPages.size === allPageCheckboxes.length && allPageCheckboxes.length > 0;
+            selectAllBtn.textContent = allSelected ? 'Deseleccionar todas' : 'Seleccionar todas las páginas';
+        }
+
+        extractButton.addEventListener('click', async () => {
+            if (!currentFile || selectedPages.size === 0) {
+                alert('Por favor selecciona al menos una página para extraer');
+                return;
+            }
+
+            extractButton.disabled = true;
+            extractButton.textContent = 'Procesando...';
+
+            const formData = new FormData();
+            formData.append('pdf', currentFile);
+            formData.append('extract_pages', Array.from(selectedPages).join(','));
+
+            try {
+                const response = await fetch('/extraer', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'extracted_output.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    alert('Páginas extraídas exitosamente!');
+
+                    currentFile = null;
+                    selectedPages.clear();
+                    previewGrid.innerHTML = '';
+                    fileInput.value = '';
+                    previewSection.style.display = 'none';
+                } else {
+                    const errorText = await response.text();
+                    alert('Error al extraer páginas: ' + errorText);
+                }
+            } catch (error) {
+                alert('Error al extraer páginas: ' + error.message);
+            } finally {
+                extractButton.disabled = false;
+                extractButton.textContent = 'Extraer Páginas Seleccionadas';
+            }
+        });
+    </script>
+</body>
+
+</html>
