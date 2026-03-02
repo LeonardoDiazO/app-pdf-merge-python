@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF Merger Tool</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
 </head>
+
 <body>
   <!-- Header -->
   <header class="app-header">
@@ -17,6 +20,7 @@
 
   <!-- Main Container -->
   <main class="main-container">
+    <a href="/" class="back-link">← Volver al inicio</a>
     <h1 class="page-title">PDF Merger Tool</h1>
 
     <!-- Drop Zone -->
@@ -27,11 +31,7 @@
     </div>
 
     <!-- Hidden File Input -->
-    <input type="file" 
-           id="fileInput" 
-           class="file-input-hidden" 
-           accept="application/pdf" 
-           multiple>
+    <input type="file" id="fileInput" class="file-input-hidden" accept="application/pdf" multiple>
 
     <!-- PDF Files Container -->
     <div class="pdf-files-container" id="pdfFilesContainer"></div>
@@ -50,7 +50,7 @@
     const fileInput = document.getElementById('fileInput');
     const pdfFilesContainer = document.getElementById('pdfFilesContainer');
     const mergeButton = document.getElementById('mergeButton');
-    
+
     let filesArray = [];
 
     // Click to select files
@@ -82,7 +82,7 @@
     // Handle files
     function handleFiles(files) {
       const pdfFiles = Array.from(files).filter(file => file.type === 'application/pdf');
-      
+
       if (pdfFiles.length === 0) {
         alert('Please select only PDF files');
         return;
@@ -95,7 +95,7 @@
     // Render files
     function renderFiles() {
       pdfFilesContainer.innerHTML = '';
-      
+
       if (filesArray.length === 0) {
         mergeButton.disabled = true;
         return;
@@ -117,8 +117,8 @@
       card.dataset.index = index;
 
       const sizeInKB = (file.size / 1024).toFixed(1);
-      const sizeText = sizeInKB > 1024 
-        ? `${(sizeInKB / 1024).toFixed(1)} MB` 
+      const sizeText = sizeInKB > 1024
+        ? `${(sizeInKB / 1024).toFixed(1)} MB`
         : `${sizeInKB} KB`;
 
       card.innerHTML = `
@@ -209,7 +209,7 @@
       filesArray.forEach((file, index) => {
         formData.append('pdfs', file);
       });
-      
+
       // Send order as comma-separated indices
       const order = filesArray.map((_, i) => i).join(',');
       formData.append('order', order);
@@ -250,4 +250,5 @@
     });
   </script>
 </body>
+
 </html>

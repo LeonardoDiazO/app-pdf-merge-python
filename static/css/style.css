@@ -10,33 +10,33 @@
   --text-secondary: #6b7280;
   --border-color: #e5e7eb;
   --border-dashed: #d1d5db;
-  
+
   /* Brand Colors */
   --pdf-red: #dc2626;
   --pdf-red-light: #fef2f2;
   --merge-green: #22c55e;
   --merge-green-hover: #16a34a;
   --merge-green-dark: #15803d;
-  
+
   /* Spacing */
   --spacing-xs: 0.5rem;
   --spacing-sm: 1rem;
   --spacing-md: 1.5rem;
   --spacing-lg: 2rem;
   --spacing-xl: 3rem;
-  
+
   /* Border Radius */
   --radius-sm: 0.5rem;
   --radius-md: 1rem;
   --radius-lg: 1.5rem;
   --radius-full: 9999px;
-  
+
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  
+
   /* Transitions */
   --transition-fast: 150ms ease-in-out;
   --transition-normal: 250ms ease-in-out;
@@ -322,7 +322,7 @@ body {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left var(--transition-slow);
 }
 
@@ -363,29 +363,29 @@ body {
   .main-container {
     padding: var(--spacing-md) var(--spacing-sm);
   }
-  
+
   .page-title {
     font-size: 2rem;
   }
-  
+
   .pdf-files-container {
     grid-template-columns: 1fr;
   }
-  
+
   .merge-button {
     padding: 1rem 3rem;
     font-size: 1rem;
   }
-  
+
   .app-header {
     padding: var(--spacing-sm);
   }
-  
+
   .logo-icon {
     width: 32px;
     height: 32px;
   }
-  
+
   .app-title {
     font-size: 1.25rem;
   }
@@ -396,13 +396,13 @@ body {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .reorder-controls {
     flex-direction: row;
     width: 100%;
     justify-content: center;
   }
-  
+
   .merge-button {
     width: 100%;
     padding: 1rem 2rem;
@@ -418,6 +418,7 @@ body {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -429,9 +430,12 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -459,4 +463,16 @@ body {
 
 .mb-lg {
   margin-bottom: var(--spacing-lg);
+}
+
+.back-link {
+  display: inline-block;
+  color: var(--text-secondary);
+  text-decoration: none;
+  margin-bottom: var(--spacing-sm);
+  transition: color var(--transition-fast);
+}
+
+.back-link:hover {
+  color: var(--text-primary);
 }

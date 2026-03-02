@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Eliminar Páginas PDF</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
   <style>
     .preview-grid {
@@ -98,18 +99,6 @@
       border-radius: var(--radius-md);
       margin-bottom: 2rem;
       color: var(--text-secondary);
-    }
-
-    .back-link {
-      display: inline-block;
-      color: var(--text-secondary);
-      text-decoration: none;
-      margin-bottom: 1rem;
-      transition: color var(--transition-fast);
-    }
-
-    .back-link:hover {
-      color: var(--text-primary);
     }
   </style>
 </head>

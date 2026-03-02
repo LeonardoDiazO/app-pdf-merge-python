@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Extraer Páginas PDF</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <style>
         .preview-grid {
@@ -127,9 +128,7 @@
     </header>
 
     <main class="main-container">
-        <a href="/"
-            style="display: inline-block; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem;">←
-            Volver al inicio</a>
+        <a href="/" class="back-link">← Volver al inicio</a>
 
         <h1 class="page-title">📑 Extraer Páginas PDF</h1>
 
