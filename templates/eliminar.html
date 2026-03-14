@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Eliminar Páginas PDF</title>
+  <title>Eliminar Páginas PDF - PDF Tools</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
@@ -26,21 +26,15 @@
       background: white;
     }
 
-    .page-preview:hover {
-      box-shadow: var(--shadow-md);
-      transform: translateY(-2px);
-    }
+    .page-preview:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .page-preview:focus-visible { outline: 2px solid var(--pdf-red); outline-offset: 2px; }
 
     .page-preview.selected {
       border-color: var(--pdf-red);
       box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
     }
 
-    .page-preview canvas {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
+    .page-preview canvas { width: 100%; height: auto; display: block; }
 
     .page-checkbox {
       position: absolute;
@@ -80,17 +74,8 @@
       text-transform: uppercase;
     }
 
-    .delete-button:hover {
-      background: #b91c1c;
-      box-shadow: var(--shadow-xl);
-      transform: translateY(-2px);
-    }
-
-    .delete-button:disabled {
-      background: var(--text-secondary);
-      cursor: not-allowed;
-      opacity: 0.5;
-    }
+    .delete-button:hover { background: #b91c1c; box-shadow: var(--shadow-xl); transform: translateY(-2px); }
+    .delete-button:disabled { background: var(--text-secondary); cursor: not-allowed; opacity: 0.5; }
 
     .instructions {
       background: var(--pdf-red-light);
@@ -100,11 +85,24 @@
       margin-bottom: 2rem;
       color: var(--text-secondary);
     }
+
+    .select-all-btn {
+      background: var(--pdf-red);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.5rem;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all var(--transition-fast);
+      margin-bottom: 1rem;
+    }
+
+    .select-all-btn:hover { background: #b91c1c; }
   </style>
 </head>
 
 <body>
-  <!-- Header -->
   <header class="app-header">
     <div class="logo-container">
       <img src="{{ url_for('static', filename='images/flask-logo.svg') }}" alt="Flask" class="logo-icon">
@@ -112,202 +110,41 @@
     </div>
   </header>
 
-  <!-- Main Container -->
   <main class="main-container">
     <a href="/" class="back-link">← Volver al inicio</a>
-
-    <h1 class="page-title">Eliminar Páginas PDF</h1>
+    <h1 class="page-title">🗑️ Eliminar Páginas PDF</h1>
 
     <div class="instructions">
       📌 Sube un archivo PDF y selecciona las páginas que deseas eliminar.
       Las páginas marcadas serán removidas del documento final.
     </div>
 
-    <!-- Drop Zone -->
     <div class="drop-zone" id="dropZone">
       <div class="drop-zone-icon">📄</div>
       <div class="drop-zone-text">Click para seleccionar un archivo PDF</div>
       <div class="drop-zone-subtext">O arrastra y suelta aquí</div>
+      <div class="drop-zone-steps">
+        <span>1. Sube</span><span> → </span><span>2. Selecciona páginas</span><span> → </span><span>3. Descarga</span>
+      </div>
     </div>
 
-    <!-- Hidden File Input -->
     <input type="file" id="fileInput" class="file-input-hidden" accept="application/pdf">
 
-    <!-- Preview Grid -->
-    <div class="preview-grid" id="previewGrid"></div>
-
-    <!-- Delete Button -->
-    <div class="merge-button-container">
-      <button class="delete-button" id="deleteButton" disabled>
-        Eliminar Páginas Seleccionadas
-      </button>
+    <div id="pageControlsSection" style="display: none;">
+      <div style="text-align: center; margin: 1rem 0;">
+        <button class="select-all-btn" id="selectAllBtn">Seleccionar todas</button>
+      </div>
+      <div class="preview-grid" id="previewGrid"></div>
+      <div class="merge-button-container">
+        <button class="delete-button" id="deleteButton" disabled>
+          Eliminar Páginas Seleccionadas
+        </button>
+      </div>
     </div>
   </main>
 
-  <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const previewGrid = document.getElementById('previewGrid');
-    const deleteButton = document.getElementById('deleteButton');
-
-    let currentFile = null;
-    let selectedPages = new Set();
-
-    // Click to select file
-    dropZone.addEventListener('click', () => {
-      fileInput.click();
-    });
-
-    // File input change
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files[0]) {
-        handleFile(e.target.files[0]);
-      }
-    });
-
-    // Drag and drop
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.classList.add('drag-over');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('drag-over');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('drag-over');
-      if (e.dataTransfer.files[0]) {
-        handleFile(e.dataTransfer.files[0]);
-      }
-    });
-
-    // Handle file
-    async function handleFile(file) {
-      if (file.type !== 'application/pdf') {
-        alert('Por favor selecciona un archivo PDF');
-        return;
-      }
-
-      currentFile = file;
-      selectedPages.clear();
-      previewGrid.innerHTML = '';
-      deleteButton.disabled = true;
-
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-      const numPages = pdf.numPages;
-
-      for (let i = 1; i <= numPages; i++) {
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 0.8 });
-
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        const context = canvas.getContext('2d');
-
-        await page.render({ canvasContext: context, viewport }).promise;
-
-        const container = document.createElement('div');
-        container.className = 'page-preview';
-        container.dataset.pageIndex = i - 1;
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'page-checkbox';
-        checkbox.dataset.pageIndex = i - 1;
-
-        const pageNumber = document.createElement('div');
-        pageNumber.className = 'page-number';
-        pageNumber.textContent = `Página ${i}`;
-
-        container.appendChild(checkbox);
-        container.appendChild(canvas);
-        container.appendChild(pageNumber);
-
-        // Click handler
-        container.addEventListener('click', (e) => {
-          if (e.target !== checkbox) {
-            checkbox.checked = !checkbox.checked;
-          }
-          togglePageSelection(parseInt(container.dataset.pageIndex), checkbox.checked);
-          container.classList.toggle('selected', checkbox.checked);
-        });
-
-        checkbox.addEventListener('change', (e) => {
-          e.stopPropagation();
-          togglePageSelection(parseInt(container.dataset.pageIndex), checkbox.checked);
-          container.classList.toggle('selected', checkbox.checked);
-        });
-
-        previewGrid.appendChild(container);
-      }
-    }
-
-    // Toggle page selection
-    function togglePageSelection(pageIndex, selected) {
-      if (selected) {
-        selectedPages.add(pageIndex);
-      } else {
-        selectedPages.delete(pageIndex);
-      }
-      deleteButton.disabled = selectedPages.size === 0;
-    }
-
-    // Delete pages
-    deleteButton.addEventListener('click', async () => {
-      if (!currentFile || selectedPages.size === 0) {
-        alert('Por favor selecciona al menos una página para eliminar');
-        return;
-      }
-
-      deleteButton.disabled = true;
-      deleteButton.textContent = 'Procesando...';
-
-      const formData = new FormData();
-      formData.append('pdf', currentFile);
-      formData.append('remove_pages', Array.from(selectedPages).join(','));
-
-      try {
-        const response = await fetch('/eliminar', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'cleaned_output.pdf';
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-
-          alert('Páginas eliminadas exitosamente!');
-
-          // Reset
-          currentFile = null;
-          selectedPages.clear();
-          previewGrid.innerHTML = '';
-          fileInput.value = '';
-        } else {
-          const errorText = await response.text();
-          alert('Error al eliminar páginas: ' + errorText);
-        }
-      } catch (error) {
-        alert('Error al eliminar páginas: ' + error.message);
-      } finally {
-        deleteButton.disabled = false;
-        deleteButton.textContent = 'Eliminar Páginas Seleccionadas';
-      }
-    });
-  </script>
+  <script src="{{ url_for('static', filename='js/pdf-tools.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/eliminar.js') }}"></script>
 </body>
 
 </html>

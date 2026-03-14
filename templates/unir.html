@@ -4,13 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF Merger Tool</title>
+  <title>Unir PDFs - PDF Tools</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
 </head>
 
 <body>
-  <!-- Header -->
   <header class="app-header">
     <div class="logo-container">
       <img src="{{ url_for('static', filename='images/flask-logo.svg') }}" alt="Flask" class="logo-icon">
@@ -18,237 +17,32 @@
     </div>
   </header>
 
-  <!-- Main Container -->
   <main class="main-container">
     <a href="/" class="back-link">← Volver al inicio</a>
-    <h1 class="page-title">PDF Merger Tool</h1>
+    <h1 class="page-title">🔗 Unir PDFs</h1>
 
-    <!-- Drop Zone -->
     <div class="drop-zone" id="dropZone">
       <div class="drop-zone-icon">📄</div>
-      <div class="drop-zone-text">Click to select PDF files or drag and drop here</div>
-      <div class="drop-zone-subtext">You can select multiple files</div>
+      <div class="drop-zone-text">Haz clic para seleccionar archivos PDF</div>
+      <div class="drop-zone-subtext">O arrastra y suelta aquí · Puedes seleccionar múltiples archivos</div>
+      <div class="drop-zone-steps">
+        <span>1. Sube archivos</span><span> → </span><span>2. Ordénalos</span><span> → </span><span>3. Descarga</span>
+      </div>
     </div>
 
-    <!-- Hidden File Input -->
     <input type="file" id="fileInput" class="file-input-hidden" accept="application/pdf" multiple>
 
-    <!-- PDF Files Container -->
     <div class="pdf-files-container" id="pdfFilesContainer"></div>
 
-    <!-- Merge Button -->
     <div class="merge-button-container">
       <button class="merge-button" id="mergeButton" disabled>
-        Merge PDFs
+        Unir PDFs
       </button>
     </div>
   </main>
 
-  <script>
-    // DOM Elements
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const pdfFilesContainer = document.getElementById('pdfFilesContainer');
-    const mergeButton = document.getElementById('mergeButton');
-
-    let filesArray = [];
-
-    // Click to select files
-    dropZone.addEventListener('click', () => {
-      fileInput.click();
-    });
-
-    // File input change
-    fileInput.addEventListener('change', (e) => {
-      handleFiles(e.target.files);
-    });
-
-    // Drag and drop events
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.classList.add('drag-over');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('drag-over');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('drag-over');
-      handleFiles(e.dataTransfer.files);
-    });
-
-    // Handle files
-    function handleFiles(files) {
-      const pdfFiles = Array.from(files).filter(file => file.type === 'application/pdf');
-
-      if (pdfFiles.length === 0) {
-        alert('Please select only PDF files');
-        return;
-      }
-
-      filesArray = [...filesArray, ...pdfFiles];
-      renderFiles();
-    }
-
-    // Render files
-    function renderFiles() {
-      pdfFilesContainer.innerHTML = '';
-
-      if (filesArray.length === 0) {
-        mergeButton.disabled = true;
-        return;
-      }
-
-      filesArray.forEach((file, index) => {
-        const card = createPdfCard(file, index);
-        pdfFilesContainer.appendChild(card);
-      });
-
-      mergeButton.disabled = filesArray.length < 2;
-    }
-
-    // Create PDF card
-    function createPdfCard(file, index) {
-      const card = document.createElement('div');
-      card.className = 'pdf-card';
-      card.draggable = true;
-      card.dataset.index = index;
-
-      const sizeInKB = (file.size / 1024).toFixed(1);
-      const sizeText = sizeInKB > 1024
-        ? `${(sizeInKB / 1024).toFixed(1)} MB`
-        : `${sizeInKB} KB`;
-
-      card.innerHTML = `
-        <div class="pdf-icon"></div>
-        <div class="pdf-info">
-          <div class="pdf-filename" title="${file.name}">${file.name}</div>
-          <div class="pdf-size">${sizeText}</div>
-        </div>
-        <div class="reorder-controls">
-          <button class="reorder-btn" onclick="moveUp(${index})" ${index === 0 ? 'disabled' : ''}>
-            ↑
-          </button>
-          <button class="reorder-btn" onclick="moveDown(${index})" ${index === filesArray.length - 1 ? 'disabled' : ''}>
-            ↓
-          </button>
-        </div>
-      `;
-
-      // Drag events
-      card.addEventListener('dragstart', (e) => {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', index);
-        card.classList.add('dragging');
-      });
-
-      card.addEventListener('dragend', () => {
-        card.classList.remove('dragging');
-      });
-
-      card.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        const draggingCard = document.querySelector('.dragging');
-        if (draggingCard && draggingCard !== card) {
-          const rect = card.getBoundingClientRect();
-          const midpoint = rect.top + rect.height / 2;
-          if (e.clientY < midpoint) {
-            card.parentNode.insertBefore(draggingCard, card);
-          } else {
-            card.parentNode.insertBefore(draggingCard, card.nextSibling);
-          }
-        }
-      });
-
-      card.addEventListener('drop', (e) => {
-        e.preventDefault();
-        updateFilesOrder();
-      });
-
-      return card;
-    }
-
-    // Move file up
-    function moveUp(index) {
-      if (index > 0) {
-        [filesArray[index], filesArray[index - 1]] = [filesArray[index - 1], filesArray[index]];
-        renderFiles();
-      }
-    }
-
-    // Move file down
-    function moveDown(index) {
-      if (index < filesArray.length - 1) {
-        [filesArray[index], filesArray[index + 1]] = [filesArray[index + 1], filesArray[index]];
-        renderFiles();
-      }
-    }
-
-    // Update files order after drag and drop
-    function updateFilesOrder() {
-      const cards = Array.from(pdfFilesContainer.children);
-      const newOrder = cards.map(card => parseInt(card.dataset.index));
-      filesArray = newOrder.map(i => filesArray[i]);
-      renderFiles();
-    }
-
-    // Merge PDFs
-    mergeButton.addEventListener('click', async () => {
-      if (filesArray.length < 2) {
-        alert('Please select at least 2 PDF files');
-        return;
-      }
-
-      mergeButton.disabled = true;
-      mergeButton.textContent = 'Merging...';
-      mergeButton.classList.add('loading');
-
-      const formData = new FormData();
-      filesArray.forEach((file, index) => {
-        formData.append('pdfs', file);
-      });
-
-      // Send order as comma-separated indices
-      const order = filesArray.map((_, i) => i).join(',');
-      formData.append('order', order);
-
-      try {
-        const response = await fetch('/unir', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'merged_output.pdf';
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-
-          // Reset
-          filesArray = [];
-          fileInput.value = '';
-          renderFiles();
-          alert('PDFs merged successfully!');
-        } else {
-          const errorText = await response.text();
-          alert('Error merging PDFs: ' + errorText);
-        }
-      } catch (error) {
-        alert('Error merging PDFs: ' + error.message);
-      } finally {
-        mergeButton.disabled = false;
-        mergeButton.textContent = 'Merge PDFs';
-        mergeButton.classList.remove('loading');
-      }
-    });
-  </script>
+  <script src="{{ url_for('static', filename='js/pdf-tools.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/unir.js') }}"></script>
 </body>
 
 </html>

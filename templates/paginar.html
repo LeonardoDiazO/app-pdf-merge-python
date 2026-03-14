@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agregar Paginación PDF - PDF Tools</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <style>
+    /* ── Acento naranja para este módulo ── */
+    :root { --accent: #f97316; --accent-hover: #ea580c; --accent-light: #fff7ed; }
+
+    .paginate-button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 1.25rem 4rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      box-shadow: var(--shadow-lg);
+      text-transform: uppercase;
+    }
+    .paginate-button:hover  { background: var(--accent-hover); box-shadow: var(--shadow-xl); transform: translateY(-2px); }
+    .paginate-button:disabled { background: var(--text-secondary); cursor: not-allowed; opacity: 0.5; }
+
+    .instructions {
+      background: var(--accent-light);
+      border-left: 4px solid var(--accent);
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 2rem;
+      color: var(--text-secondary);
+    }
+
+    /* ── Panel de configuración ── */
+    .config-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      margin: var(--spacing-lg) 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .config-row {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+
+    .config-label {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      min-width: 180px;
+      padding-top: 0.35rem;
+    }
+
+    .config-hint {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* ── Selector de posición ── */
+    .position-picker {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: auto 48px auto;
+      gap: 0.35rem;
+      max-width: 260px;
+      background: #f9fafb;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.5rem;
+    }
+
+    .pos-btn {
+      padding: 0.4rem 0.5rem;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background: white;
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all var(--transition-fast);
+      text-align: center;
+      line-height: 1.3;
+    }
+    .pos-btn:hover  { border-color: var(--accent); color: var(--accent); }
+    .pos-btn.selected { border-color: var(--accent); background: var(--accent-light); color: var(--accent-hover); }
+
+    .pos-page-area {
+      grid-column: 1 / -1;
+      background: white;
+      border: 1px dashed var(--border-dashed);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      opacity: 0.5;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Selector de formato ── */
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .fmt-btn, .size-btn {
+      padding: 0.45rem 1rem;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: white;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all var(--transition-fast);
+    }
+    .fmt-btn:hover,  .size-btn:hover  { border-color: var(--accent); color: var(--accent); }
+    .fmt-btn.selected, .size-btn.selected { border-color: var(--accent); background: var(--accent-light); color: var(--accent-hover); }
+
+    .format-preview {
+      display: inline-block;
+      background: #f9fafb;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0.25rem 0.75rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      margin-left: 0.5rem;
+    }
+
+    /* ── Inputs numéricos ── */
+    .number-input {
+      width: 90px;
+      padding: 0.5rem 0.75rem;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: center;
+      transition: border-color var(--transition-fast);
+    }
+    .number-input:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Toggle ── */
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .toggle-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+
+    /* ── Info hint total páginas ── */
+    .pages-hint {
+      background: var(--accent-light);
+      border-radius: var(--radius-sm);
+      padding: 0.35rem 0.75rem;
+      font-size: 0.82rem;
+      color: var(--accent-hover);
+      font-weight: 500;
+      margin-top: 0.4rem;
+    }
+
+    /* ── Divider ── */
+    .config-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 0.25rem 0;
+    }
+
+    @media (max-width: 600px) {
+      .config-row { flex-direction: column; gap: 0.5rem; }
+      .config-label { min-width: unset; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="logo-container">
+      <img src="{{ url_for('static', filename='images/flask-logo.svg') }}" alt="Flask" class="logo-icon">
+      <img src="{{ url_for('static', filename='images/python-logo.svg') }}" alt="Python" class="logo-icon">
+    </div>
+  </header>
+
+  <main class="main-container">
+    <a href="/" class="back-link">← Volver al inicio</a>
+    <h1 class="page-title">🔢 Agregar Paginación</h1>
+
+    <div class="instructions">
+      📌 Sube un PDF y configura cómo se numerarán las páginas. Si tu documento tiene portada,
+      simplemente indica desde qué página quieres empezar a numerar.
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-zone-icon">📄</div>
+      <div class="drop-zone-text">Click para seleccionar un archivo PDF</div>
+      <div class="drop-zone-subtext">O arrastra y suelta aquí</div>
+      <div class="drop-zone-steps">
+        <span>1. Sube</span><span> → </span><span>2. Configura</span><span> → </span><span>3. Descarga</span>
+      </div>
+    </div>
+
+    <input type="file" id="fileInput" class="file-input-hidden" accept="application/pdf">
+
+    <!-- Configuration Panel -->
+    <div id="configSection" style="display:none;">
+
+      <div class="config-panel">
+
+        <!-- Desde qué página -->
+        <div class="config-row">
+          <div>
+            <div class="config-label">Iniciar desde la página</div>
+            <div class="config-hint">¿Desde qué página del PDF empezar a numerar?</div>
+          </div>
+          <div>
+            <input type="number" id="fromPage" class="number-input" min="1" value="1">
+            <div class="pages-hint" id="totalPagesHint" style="display:none;"></div>
+            <div class="config-hint" style="margin-top:0.4rem;">
+              Ej: pon <strong>2</strong> si la página 1 es portada, <strong>3</strong> si son portada + índice…
+            </div>
+          </div>
+        </div>
+
+        <div class="config-divider"></div>
+
+        <!-- Número inicial -->
+        <div class="config-row">
+          <div>
+            <div class="config-label">Número inicial</div>
+            <div class="config-hint">¿Con qué número empieza la primera página numerada?</div>
+          </div>
+          <input type="number" id="startNumber" class="number-input" min="1" value="1">
+        </div>
+
+        <div class="config-divider"></div>
+
+        <!-- Posición -->
+        <div class="config-row">
+          <div>
+            <div class="config-label">Posición</div>
+            <div class="config-hint">¿Dónde aparece el número en la página?</div>
+          </div>
+          <div class="position-picker">
+            <button class="pos-btn" data-pos="top-left">↖ Sup. Izq.</button>
+            <button class="pos-btn" data-pos="top-center">↑ Sup. Centro</button>
+            <button class="pos-btn" data-pos="top-right">↗ Sup. Der.</button>
+            <div class="pos-page-area">PÁGINA</div>
+            <button class="pos-btn" data-pos="bottom-left">↙ Inf. Izq.</button>
+            <button class="pos-btn selected" data-pos="bottom-center">↓ Inf. Centro</button>
+            <button class="pos-btn" data-pos="bottom-right">↘ Inf. Der.</button>
+          </div>
+        </div>
+
+        <div class="config-divider"></div>
+
+        <!-- Formato -->
+        <div class="config-row">
+          <div>
+            <div class="config-label">Formato</div>
+            <div class="config-hint">Aspecto del número en el PDF</div>
+          </div>
+          <div>
+            <div class="btn-group">
+              <button class="fmt-btn selected" data-fmt="number">1</button>
+              <button class="fmt-btn" data-fmt="page_number">Página 1</button>
+              <button class="fmt-btn" data-fmt="of_total">1 / 10</button>
+              <button class="fmt-btn" data-fmt="classic">- 1 -</button>
+            </div>
+            <div style="margin-top:0.6rem;font-size:0.82rem;color:var(--text-secondary)">
+              Vista previa: <span class="format-preview" id="formatPreview">1</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-divider"></div>
+
+        <!-- Tamaño de fuente -->
+        <div class="config-row">
+          <div>
+            <div class="config-label">Tamaño de fuente</div>
+          </div>
+          <div class="btn-group">
+            <button class="size-btn" data-size="10">10 pt</button>
+            <button class="size-btn selected" data-size="12">12 pt</button>
+            <button class="size-btn" data-size="14">14 pt</button>
+          </div>
+        </div>
+
+        <div class="config-divider"></div>
+
+        <!-- Cubrir paginación existente -->
+        <div class="config-row">
+          <div>
+            <div class="config-label">Paginación existente</div>
+            <div class="config-hint">Si el PDF ya tiene números, activa esto para cubrirlos con fondo blanco</div>
+          </div>
+          <label class="toggle-label">
+            <input type="checkbox" id="coverExisting">
+            Cubrir paginación existente
+          </label>
+        </div>
+
+      </div>
+
+      <!-- Action button -->
+      <div class="merge-button-container">
+        <button class="paginate-button" id="paginateButton" disabled>
+          Agregar Paginación
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/pdf-tools.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/paginar.js') }}"></script>
+</body>
+
+</html>
