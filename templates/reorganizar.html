@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reorganizar Páginas PDF - PDF Tools</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <style>
+    .pages-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+
+    .page-card {
+      position: relative;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: all var(--transition-normal);
+      cursor: grab;
+      background: white;
+      box-shadow: var(--shadow-sm);
+      animation: fadeIn var(--transition-normal) ease-out;
+    }
+
+    .page-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .page-card:active { cursor: grabbing; }
+    .page-card.dragging { opacity: 0.4; transform: scale(0.95); box-shadow: none; }
+    .page-card.drag-over { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2); }
+
+    .page-card canvas { width: 100%; height: auto; display: block; }
+
+    .page-position-label {
+      background: #f97316;
+      color: white;
+      padding: 0.35rem 0.5rem;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .page-origin-label {
+      background: rgba(0, 0, 0, 0.65);
+      color: white;
+      padding: 0.4rem 0.5rem;
+      text-align: center;
+      font-size: 0.75rem;
+    }
+
+    .reorder-button {
+      background: #f97316;
+      color: white;
+      border: none;
+      padding: 1.25rem 4rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      box-shadow: var(--shadow-lg);
+      text-transform: uppercase;
+    }
+
+    .reorder-button:hover { background: #ea6c03; box-shadow: var(--shadow-xl); transform: translateY(-2px); }
+    .reorder-button:disabled { background: var(--text-secondary); cursor: not-allowed; opacity: 0.5; }
+
+    .reset-btn {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1.25rem;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all var(--transition-fast);
+      margin-bottom: 1rem;
+    }
+
+    .reset-btn:hover { background: var(--primary-bg); color: var(--text-primary); }
+
+    .instructions {
+      background: #fff7ed;
+      border-left: 4px solid #f97316;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 2rem;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="logo-container">
+      <img src="{{ url_for('static', filename='images/flask-logo.svg') }}" alt="Flask" class="logo-icon">
+      <img src="{{ url_for('static', filename='images/python-logo.svg') }}" alt="Python" class="logo-icon">
+    </div>
+  </header>
+
+  <main class="main-container">
+    <a href="/" class="back-link">← Volver al inicio</a>
+    <h1 class="page-title">🔀 Reorganizar Páginas</h1>
+
+    <div class="instructions">
+      📌 Sube un PDF y arrastra las páginas al orden que necesitas. Útil cuando un merge quedó con páginas en el orden incorrecto.
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-zone-icon">📄</div>
+      <div class="drop-zone-text">Haz clic para seleccionar un archivo PDF</div>
+      <div class="drop-zone-subtext">O arrastra y suelta aquí</div>
+      <div class="drop-zone-steps">
+        <span>1. Sube</span><span> → </span><span>2. Arrastra páginas</span><span> → </span><span>3. Descarga</span>
+      </div>
+    </div>
+
+    <input type="file" id="fileInput" class="file-input-hidden" accept="application/pdf">
+
+    <div id="previewSection" style="display: none;">
+      <div style="text-align: center; margin: 1rem 0;">
+        <button class="reset-btn" id="resetBtn">↺ Restablecer orden original</button>
+      </div>
+      <div class="pages-grid" id="pagesGrid"></div>
+      <div class="merge-button-container">
+        <button class="reorder-button" id="reorderButton" disabled>
+          Aplicar Nuevo Orden
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/pdf-tools.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/reorganizar.js') }}"></script>
+</body>
+
+</html>

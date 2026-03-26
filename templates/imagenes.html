@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Imágenes a PDF - PDF Tools</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <style>
+    .image-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      cursor: move;
+      transition: all var(--transition-normal);
+      position: relative;
+      box-shadow: var(--shadow-sm);
+      animation: fadeIn var(--transition-normal) ease-out;
+    }
+
+    .image-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .image-card.dragging { opacity: 0.5; transform: scale(0.95); }
+
+    .image-thumb-wrap {
+      width: 60px;
+      height: 60px;
+      flex-shrink: 0;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--primary-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-md);
+    }
+
+    .image-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .convert-button {
+      background: #f97316;
+      color: white;
+      border: none;
+      padding: 1.25rem 4rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      box-shadow: var(--shadow-lg);
+      text-transform: uppercase;
+    }
+
+    .convert-button:hover { background: #ea6c03; box-shadow: var(--shadow-xl); transform: translateY(-2px); }
+    .convert-button:disabled { background: var(--text-secondary); cursor: not-allowed; opacity: 0.5; }
+
+    .instructions {
+      background: #fff7ed;
+      border-left: 4px solid #f97316;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 2rem;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="logo-container">
+      <img src="{{ url_for('static', filename='images/flask-logo.svg') }}" alt="Flask" class="logo-icon">
+      <img src="{{ url_for('static', filename='images/python-logo.svg') }}" alt="Python" class="logo-icon">
+    </div>
+  </header>
+
+  <main class="main-container">
+    <a href="/" class="back-link">← Volver al inicio</a>
+    <h1 class="page-title">🖼️ Imágenes a PDF</h1>
+
+    <div class="instructions">
+      📌 Sube una o varias imágenes (JPG, PNG, WEBP, GIF, BMP) y se convertirán en un solo PDF.
+      Puedes reordenarlas antes de convertir. Máximo 20 imágenes de 10 MB cada una.
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-zone-icon">🖼️</div>
+      <div class="drop-zone-text">Haz clic para seleccionar imágenes</div>
+      <div class="drop-zone-subtext">O arrastra y suelta aquí · JPG, PNG, WEBP, GIF, BMP</div>
+      <div class="drop-zone-steps">
+        <span>1. Sube imágenes</span><span> → </span><span>2. Ordénalas</span><span> → </span><span>3. Descarga PDF</span>
+      </div>
+    </div>
+
+    <input type="file" id="fileInput" class="file-input-hidden" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp" multiple>
+
+    <div class="pdf-files-container" id="imagesContainer"></div>
+
+    <div class="merge-button-container">
+      <button class="convert-button" id="convertButton" disabled>
+        Convertir a PDF
+      </button>
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/pdf-tools.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/imagenes.js') }}"></script>
+</body>
+
+</html>

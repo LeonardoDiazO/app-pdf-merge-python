@@ -7,6 +7,7 @@ from flask_limiter.util import get_remote_address
 from reportlab.pdfgen import canvas as rl_canvas
 from reportlab.lib.colors import white, black
 from reportlab.pdfbase.pdfmetrics import stringWidth
+from PIL import Image, UnidentifiedImageError
 import io
 import logging
 import os
@@ -328,6 +329,145 @@ def extraer():
             return err("Error inesperado al extraer páginas", 500)
 
     return render_template('extraer.html')
+
+
+@app.route('/imagenes', methods=['GET', 'POST'])
+@limiter.limit("10 per minute")
+def imagenes():
+    if request.method == 'POST':
+        try:
+            files = request.files.getlist('images')
+
+            if not files or len(files) == 0:
+                return err("No se han subido imágenes")
+
+            MAX_IMAGES = 20
+            MAX_IMAGE_MB = 10
+            ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'}
+
+            if len(files) > MAX_IMAGES:
+                return err(f"Máximo {MAX_IMAGES} imágenes permitidas")
+
+            order = request.form.get('order', '')
+            if not order:
+                return err("Orden de imágenes no especificado")
+
+            try:
+                order_indices = list(map(int, order.split(",")))
+            except ValueError:
+                return err("Formato de orden inválido")
+
+            uploaded_contents = []
+            for file in files:
+                if not file or not file.filename:
+                    return err("Archivo inválido")
+                ext = os.path.splitext(file.filename.lower())[1]
+                if ext not in ALLOWED_EXTENSIONS:
+                    return err(f"Formato no soportado: '{file.filename}'. Use JPG, PNG, WEBP, GIF o BMP")
+                content = file.read()
+                if len(content) == 0:
+                    return err(f"El archivo '{file.filename}' está vacío")
+                if len(content) > MAX_IMAGE_MB * 1024 * 1024:
+                    return err(f"El archivo '{file.filename}' supera el límite de {MAX_IMAGE_MB} MB")
+                uploaded_contents.append(content)
+
+            if len(order_indices) != len(uploaded_contents):
+                return err("Error en la correspondencia del orden")
+
+            try:
+                ordered_contents = [uploaded_contents[i] for i in order_indices]
+            except IndexError:
+                return err("Error en la correspondencia del orden")
+
+            pil_images = []
+            for content in ordered_contents:
+                try:
+                    img = Image.open(io.BytesIO(content))
+                    img = img.convert('RGB')
+                    pil_images.append(img)
+                except UnidentifiedImageError:
+                    return err("Una de las imágenes no es válida o está dañada")
+
+            output_stream = io.BytesIO()
+            if len(pil_images) == 1:
+                pil_images[0].save(output_stream, format='PDF')
+            else:
+                pil_images[0].save(
+                    output_stream,
+                    format='PDF',
+                    save_all=True,
+                    append_images=pil_images[1:]
+                )
+            output_stream.seek(0)
+
+            logger.info(f"Successfully converted {len(pil_images)} images to PDF")
+            return send_file(
+                output_stream,
+                as_attachment=True,
+                download_name="images_output.pdf",
+                mimetype='application/pdf'
+            )
+
+        except Exception as e:
+            logger.error(f"Unexpected error in images to PDF: {e}")
+            return err("Error inesperado al convertir imágenes", 500)
+
+    return render_template('imagenes.html')
+
+
+@app.route('/reorganizar', methods=['GET', 'POST'])
+@limiter.limit("10 per minute")
+def reorganizar():
+    if request.method == 'POST':
+        try:
+            pdf_file = request.files.get('pdf')
+            order_str = request.form.get('page_order', '')
+
+            stream, error = validate_pdf_upload(pdf_file, max_mb=10)
+            if error:
+                return error
+
+            if not order_str:
+                return err("No se especificó el nuevo orden de páginas")
+
+            try:
+                new_order = list(map(int, order_str.split(',')))
+            except ValueError:
+                return err("Formato de orden inválido")
+
+            reader, error = open_pdf(stream, "El PDF")
+            if error:
+                return error
+
+            total_pages = len(reader.pages)
+
+            if len(new_order) != total_pages:
+                return err(f"El orden debe incluir las {total_pages} páginas del documento")
+
+            if sorted(new_order) != list(range(total_pages)):
+                return err("El orden contiene índices de página inválidos o duplicados")
+
+            writer = PdfWriter()
+            for page_idx in new_order:
+                writer.add_page(reader.pages[page_idx])
+
+            output_stream = io.BytesIO()
+            writer.write(output_stream)
+            output_stream.seek(0)
+
+            logger.info(f"Successfully reordered PDF with {total_pages} pages")
+            return send_file(
+                output_stream,
+                as_attachment=True,
+                download_name="reordered_output.pdf",
+                mimetype='application/pdf'
+            )
+
+        except Exception as e:
+            logger.error(f"Unexpected error in page reorder: {e}")
+            return err("Error inesperado al reorganizar páginas", 500)
+
+    return render_template('reorganizar.html')
 
 
 @app.route('/info')

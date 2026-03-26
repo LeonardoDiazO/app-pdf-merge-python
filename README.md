@@ -6,10 +6,21 @@ Una aplicación web moderna y segura diseñada para manipular archivos PDF de fo
 
 ## 🚀 Características Principales
 
+### Módulos Actuales
 - **🔗 Unir PDFs**: Combina varios archivos PDF en un solo documento. Reordena tus archivos fácilmente antes de unirlos.
 - **🔄 Rotar Páginas**: Corrige la orientación de tus documentos rotando páginas en ángulos de 90°, 180° o 270°.
 - **📑 Extraer Páginas**: Selecciona y extrae páginas específicas de un PDF para crear un nuevo documento.
 - **🗑️ Eliminar Páginas**: Remueve páginas innecesarias de tus archivos PDF con una vista previa visual.
+- **🔢 Paginar**: Añade numeración de páginas personalizable en posición, formato y tamaño de fuente.
+
+- **🖼️ Imágenes a PDF**: Convierte una o varias imágenes (JPG, PNG, WEBP, GIF, BMP) en un documento PDF. Soporta reordenamiento visual con drag & drop antes de convertir.
+- **🔀 Reorganizar Páginas**: Reordena las páginas de un PDF mediante drag & drop visual con miniaturas. Ideal para corregir el orden tras un merge incorrecto.
+
+### Módulos Próximos (En Desarrollo)
+- **📄 Word a PDF** _(Sprint 2)_: Convierte documentos .docx a PDF directamente desde el navegador.
+- **📄 PDF a Word** _(Sprint 2)_: Extrae el contenido de un PDF a formato .docx editable.
+
+### Siempre Presente
 - **🔒 Privacidad Garantizada**: El procesamiento se realiza de forma temporal y segura. Los archivos no se almacenan permanentemente en el servidor.
 - **📱 Diseño Responsivo**: Interfaz moderna y adaptable a cualquier dispositivo.
 
@@ -19,6 +30,9 @@ Una aplicación web moderna y segura diseñada para manipular archivos PDF de fo
 - **Python 3.x**
 - **Flask**: Framework web ligero y potente.
 - **PyPDF2**: Biblioteca para manipulación de PDFs.
+- **ReportLab**: Generación y superposición de contenido PDF (paginación).
+- **Pillow**: Conversión de imágenes a PDF _(próximamente)_.
+- **pdf2docx / python-docx**: Conversión Word ↔ PDF _(próximamente)_.
 - **Flask-Limiter**: Seguridad mediante limitación de peticiones.
 - **Gunicorn**: Servidor HTTP WSGI para producción.
 
@@ -26,6 +40,7 @@ Una aplicación web moderna y segura diseñada para manipular archivos PDF de fo
 - **HTML5 & CSS3**: Diseño personalizado con un sistema de diseño moderno.
 - **JavaScript (Vanilla)**: Lógica interactiva y manejo de archivos.
 - **PDF.js**: Renderizado de vistas previas de PDF en el navegador.
+- **SortableJS**: Drag & drop para reorganización de páginas _(próximamente)_.
 
 ## 📦 Instalación y Uso Local
 
