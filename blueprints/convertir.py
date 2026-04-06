@@ -5,6 +5,7 @@ from utils import err, validate_pdf_upload
 import pikepdf
 import io
 import os
+import gc
 import logging
 
 logger = logging.getLogger(__name__)
@@ -106,9 +107,11 @@ COMPRESSION_LEVELS = {
     'ultra':    {'quality': 20,   'label': 'Ultra',    'max_mb': 40, 'max_dim': 1500},
 }
 
-# Max pixels before skipping an image (25 MP ≈ 75 MB uncompressed RGB).
-# Ultra level is exempt when downsampling because the image is resized before encoding.
-MAX_IMAGE_PIXELS = 25_000_000
+# Per-mode pixel limits to prevent OOM on Render free tier (512 MB RAM).
+# Without downsampling: 8 MP ≈ 24 MB uncompressed RGB — safe for quality-only recompression.
+# With downsampling (ultra): 15 MP ≈ 45 MB — covers 300-400 DPI letter scans (8.4 MP typical).
+_MAX_PIXELS_NORMAL = 8_000_000
+_MAX_PIXELS_DOWNSAMPLE = 15_000_000
 
 
 def _recompress_page_images(page, jpeg_quality, max_dim=None):
@@ -120,6 +123,7 @@ def _recompress_page_images(page, jpeg_quality, max_dim=None):
         xobjects = resources.get('/XObject')
         if xobjects is None:
             return
+        pixel_limit = _MAX_PIXELS_DOWNSAMPLE if max_dim else _MAX_PIXELS_NORMAL
         for name in list(xobjects.keys()):
             pil_image = None
             buf = None
@@ -129,11 +133,10 @@ def _recompress_page_images(page, jpeg_quality, max_dim=None):
                     continue
                 pdfimage = pikepdf.PdfImage(xobj)
                 pil_image = pdfimage.as_pil_image()
-                pixels = pil_image.width * pil_image.height
-                if pixels > MAX_IMAGE_PIXELS and max_dim is None:
-                    continue  # Skip massive images when not downsampling
-                if pixels > MAX_IMAGE_PIXELS * 4:
-                    continue  # Always skip extreme images (>100 MP)
+                if pil_image.width * pil_image.height > pixel_limit:
+                    pil_image.close()
+                    pil_image = None
+                    continue
                 if pil_image.mode in ('RGBA', 'P', 'LA'):
                     pil_image = pil_image.convert('RGB')
                 elif pil_image.mode not in ('RGB', 'L'):
@@ -142,7 +145,9 @@ def _recompress_page_images(page, jpeg_quality, max_dim=None):
                     ratio = max_dim / max(pil_image.width, pil_image.height)
                     new_w = max(1, int(pil_image.width * ratio))
                     new_h = max(1, int(pil_image.height * ratio))
-                    pil_image = pil_image.resize((new_w, new_h), Image.LANCZOS)
+                    resized = pil_image.resize((new_w, new_h), Image.BILINEAR)
+                    pil_image.close()   # free original before keeping resized
+                    pil_image = resized
                 buf = io.BytesIO()
                 pil_image.save(buf, format='JPEG', quality=jpeg_quality)
                 xobj.write(buf.getvalue(), filter=pikepdf.Name('/DCTDecode'))
@@ -157,6 +162,7 @@ def _recompress_page_images(page, jpeg_quality, max_dim=None):
                     pil_image.close()
                 if buf is not None:
                     buf.close()
+                gc.collect()
     except Exception:
         pass
 
