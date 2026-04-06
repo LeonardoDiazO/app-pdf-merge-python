@@ -100,17 +100,19 @@ def imagenes():
 # ── Comprimir ─────────────────────────────────────────────────────────────────
 
 COMPRESSION_LEVELS = {
-    'leve':     {'quality': None, 'label': 'Leve',     'max_mb': 40},
-    'media':    {'quality': 60,   'label': 'Media',    'max_mb': 40},
-    'agresiva': {'quality': 35,   'label': 'Agresiva', 'max_mb': 40},
+    'leve':     {'quality': None, 'label': 'Leve',     'max_mb': 40, 'max_dim': None},
+    'media':    {'quality': 60,   'label': 'Media',    'max_mb': 40, 'max_dim': None},
+    'agresiva': {'quality': 35,   'label': 'Agresiva', 'max_mb': 40, 'max_dim': None},
+    'ultra':    {'quality': 20,   'label': 'Ultra',    'max_mb': 40, 'max_dim': 1500},
 }
 
+# Max pixels before skipping an image (25 MP ≈ 75 MB uncompressed RGB).
+# Ultra level is exempt when downsampling because the image is resized before encoding.
+MAX_IMAGE_PIXELS = 25_000_000
 
-MAX_IMAGE_PIXELS = 8_000_000  # ~8 MP = ~24 MB uncompressed RGB — safe for Render free tier
 
-
-def _recompress_page_images(page, jpeg_quality):
-    """Recompress JPEG-compatible images in a page at the given quality."""
+def _recompress_page_images(page, jpeg_quality, max_dim=None):
+    """Recompress images in a page. Optionally downsample to max_dim pixels on longest side."""
     try:
         resources = page.get('/Resources')
         if resources is None:
@@ -127,12 +129,20 @@ def _recompress_page_images(page, jpeg_quality):
                     continue
                 pdfimage = pikepdf.PdfImage(xobj)
                 pil_image = pdfimage.as_pil_image()
-                if pil_image.width * pil_image.height > MAX_IMAGE_PIXELS:
-                    continue  # Skip images too large to safely process in memory
+                pixels = pil_image.width * pil_image.height
+                if pixels > MAX_IMAGE_PIXELS and max_dim is None:
+                    continue  # Skip massive images when not downsampling
+                if pixels > MAX_IMAGE_PIXELS * 4:
+                    continue  # Always skip extreme images (>100 MP)
                 if pil_image.mode in ('RGBA', 'P', 'LA'):
                     pil_image = pil_image.convert('RGB')
                 elif pil_image.mode not in ('RGB', 'L'):
                     pil_image = pil_image.convert('RGB')
+                if max_dim and max(pil_image.width, pil_image.height) > max_dim:
+                    ratio = max_dim / max(pil_image.width, pil_image.height)
+                    new_w = max(1, int(pil_image.width * ratio))
+                    new_h = max(1, int(pil_image.height * ratio))
+                    pil_image = pil_image.resize((new_w, new_h), Image.LANCZOS)
                 buf = io.BytesIO()
                 pil_image.save(buf, format='JPEG', quality=jpeg_quality)
                 xobj.write(buf.getvalue(), filter=pikepdf.Name('/DCTDecode'))
@@ -182,9 +192,10 @@ def comprimir():
                 return err("El PDF no tiene páginas")
 
             jpeg_quality = level_cfg['quality']
+            max_dim = level_cfg.get('max_dim')
             if jpeg_quality is not None:
                 for page in pdf.pages:
-                    _recompress_page_images(page, jpeg_quality)
+                    _recompress_page_images(page, jpeg_quality, max_dim)
 
             output_stream = io.BytesIO()
             pdf.save(

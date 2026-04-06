@@ -10,7 +10,7 @@
   <style>
     .level-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 1rem;
       margin: 2rem 0;
     }
@@ -189,8 +189,14 @@
         <div class="level-card" data-level="agresiva" data-max-mb="40">
           <div class="level-icon">💪</div>
           <div class="level-name">Agresiva</div>
-          <div class="level-desc">Máxima reducción. Las imágenes pierden calidad notablemente.</div>
+          <div class="level-desc">Máxima reducción de calidad JPEG. Ideal para reducir tamaño significativamente.</div>
           <span class="level-badge">Estimado: 40–70%</span>
+        </div>
+        <div class="level-card" data-level="ultra" data-max-mb="40">
+          <div class="level-icon">🗜️</div>
+          <div class="level-name">Ultra</div>
+          <div class="level-desc">Reduce calidad <strong>y resolución</strong> de imágenes. Ideal para documentos escaneados que deben caber en límites estrictos (ej. plataformas de 8 MB).</div>
+          <span class="level-badge">Estimado: 60–85%</span>
         </div>
       </div>
 
@@ -203,8 +209,8 @@
     </div>
   </main>
 
-  <script src="{{ url_for('static', filename='js/pdf-tools.js') }}?v=1.2"></script>
-  <script src="{{ url_for('static', filename='js/comprimir.js') }}?v=1.2"></script>
+  <script src="{{ url_for('static', filename='js/pdf-tools.js') }}?v=1.3"></script>
+  <script src="{{ url_for('static', filename='js/comprimir.js') }}?v=1.3"></script>
 </body>
 
 </html>
