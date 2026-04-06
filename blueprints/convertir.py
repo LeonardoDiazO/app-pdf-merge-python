@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, send_file
 from PIL import Image, UnidentifiedImageError
 from extensions import limiter
-from utils import err, validate_pdf_upload, open_pdf, MAX_PAGES
+from utils import err, validate_pdf_upload, open_pdf
 import pikepdf
 import io
 import os
@@ -165,8 +165,6 @@ def comprimir():
                 return err("El PDF está protegido con contraseña")
             if len(pdf.pages) == 0:
                 return err("El PDF no tiene páginas")
-            if len(pdf.pages) > MAX_PAGES:
-                return err(f"El PDF tiene demasiadas páginas (máximo {MAX_PAGES})")
 
             jpeg_quality = COMPRESSION_LEVELS[level]['quality']
             if jpeg_quality is not None:

@@ -6,8 +6,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-MAX_PAGES = 200
-
 
 def err(msg, status=400):
     """Return a structured JSON error response."""
@@ -39,8 +37,6 @@ def open_pdf(stream, label="El PDF"):
             return None, err(f"{label} está protegido con contraseña")
         if len(reader.pages) == 0:
             return None, err(f"{label} no tiene páginas")
-        if len(reader.pages) > MAX_PAGES:
-            return None, err(f"{label} tiene demasiadas páginas (máximo {MAX_PAGES})")
         return reader, None
     except PdfReadError as e:
         logger.error(f"PdfReadError ({label}): {e}")
