@@ -101,8 +101,8 @@ def imagenes():
 
 COMPRESSION_LEVELS = {
     'leve':     {'quality': None, 'label': 'Leve',     'max_mb': 40},
-    'media':    {'quality': 60,   'label': 'Media',    'max_mb': 20},
-    'agresiva': {'quality': 35,   'label': 'Agresiva', 'max_mb': 15},
+    'media':    {'quality': 60,   'label': 'Media',    'max_mb': 40},
+    'agresiva': {'quality': 35,   'label': 'Agresiva', 'max_mb': 40},
 }
 
 
