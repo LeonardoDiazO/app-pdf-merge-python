@@ -9,7 +9,7 @@ const ORIGINAL_DROP_ZONE_HTML = dropZone.innerHTML;
 
 let currentFile = null;
 let selectedLevel = 'media';
-let selectedMaxMb = 30;
+let selectedMaxMb = 20; // default matches 'media' level
 
 document.querySelectorAll('.level-card').forEach(card => {
   card.addEventListener('click', () => {

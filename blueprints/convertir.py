@@ -101,9 +101,12 @@ def imagenes():
 
 COMPRESSION_LEVELS = {
     'leve':     {'quality': None, 'label': 'Leve',     'max_mb': 40},
-    'media':    {'quality': 60,   'label': 'Media',    'max_mb': 30},
-    'agresiva': {'quality': 35,   'label': 'Agresiva', 'max_mb': 20},
+    'media':    {'quality': 60,   'label': 'Media',    'max_mb': 20},
+    'agresiva': {'quality': 35,   'label': 'Agresiva', 'max_mb': 15},
 }
+
+
+MAX_IMAGE_PIXELS = 8_000_000  # ~8 MP = ~24 MB uncompressed RGB — safe for Render free tier
 
 
 def _recompress_page_images(page, jpeg_quality):
@@ -116,23 +119,34 @@ def _recompress_page_images(page, jpeg_quality):
         if xobjects is None:
             return
         for name in list(xobjects.keys()):
+            pil_image = None
+            buf = None
             try:
                 xobj = xobjects[name]
                 if str(xobj.get('/Subtype', '')) != '/Image':
                     continue
                 pdfimage = pikepdf.PdfImage(xobj)
                 pil_image = pdfimage.as_pil_image()
+                if pil_image.width * pil_image.height > MAX_IMAGE_PIXELS:
+                    continue  # Skip images too large to safely process in memory
                 if pil_image.mode in ('RGBA', 'P', 'LA'):
                     pil_image = pil_image.convert('RGB')
                 elif pil_image.mode not in ('RGB', 'L'):
                     pil_image = pil_image.convert('RGB')
                 buf = io.BytesIO()
-                pil_image.save(buf, format='JPEG', quality=jpeg_quality, optimize=True)
+                pil_image.save(buf, format='JPEG', quality=jpeg_quality)
                 xobj.write(buf.getvalue(), filter=pikepdf.Name('/DCTDecode'))
                 if '/DecodeParms' in xobj:
                     del xobj['/DecodeParms']
+            except MemoryError:
+                logger.warning("Skipping image: not enough memory to recompress")
             except Exception:
                 pass
+            finally:
+                if pil_image is not None:
+                    pil_image.close()
+                if buf is not None:
+                    buf.close()
     except Exception:
         pass
 
