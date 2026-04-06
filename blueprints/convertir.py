@@ -24,7 +24,7 @@ def imagenes():
                 return err("No se han subido imágenes")
 
             MAX_IMAGES = 20
-            MAX_IMAGE_MB = 20
+            MAX_IMAGE_MB = 40
             ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'}
 
             if len(files) > MAX_IMAGES:
@@ -148,7 +148,7 @@ def comprimir():
             if level not in COMPRESSION_LEVELS:
                 return err("Nivel de compresión inválido")
 
-            stream, error = validate_pdf_upload(pdf_file, max_mb=20)
+            stream, error = validate_pdf_upload(pdf_file, max_mb=40)
             if error:
                 return error
 
@@ -190,10 +190,14 @@ def comprimir():
                 f"({reduction}% reduction)"
             )
 
+            original_filename = pdf_file.filename if getattr(pdf_file, 'filename', None) else 'documento.pdf'
+            name_base, ext = os.path.splitext(original_filename)
+            safe_name = f"{name_base}_comprimido{ext}"
+
             response = send_file(
                 output_stream,
                 as_attachment=True,
-                download_name="compressed_output.pdf",
+                download_name=safe_name,
                 mimetype='application/pdf',
             )
             response.headers['X-Original-Size'] = str(original_size)

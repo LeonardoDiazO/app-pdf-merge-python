@@ -22,7 +22,7 @@ PdfTools.initDropZone(dropZone, fileInput, handleFiles);
 
 function handleFiles(files) {
   const file = files[0];
-  const v = PdfTools.validatePdfFile(file, 20);
+  const v = PdfTools.validatePdfFile(file, 40);
   if (!v.valid) { PdfTools.showToast(v.error, 'error'); return; }
 
   currentFile = file;
@@ -52,14 +52,21 @@ compressButton.addEventListener('click', async () => {
       const reduction     = parseFloat(response.headers.get('X-Reduction-Percent') || '0');
 
       const blob = await response.blob();
-      PdfTools.downloadBlob(blob, `compress-${currentFile.name}`);
+      const outputName = `compress-${currentFile.name}`;
+      PdfTools.downloadBlob(blob, outputName);
 
-      const reductionText = reduction > 0
-        ? `Se redujo un <strong>${reduction}%</strong> (${PdfTools.formatFileSize(originalSize)} → ${PdfTools.formatFileSize(compressedSize)})`
-        : `Tamaño final: ${PdfTools.formatFileSize(compressedSize)} (sin cambio significativo)`;
+      const reductionMsg = reduction > 0
+        ? `Reducción: ${reduction}% (${PdfTools.formatFileSize(originalSize)} → ${PdfTools.formatFileSize(compressedSize)})`
+        : `Sin cambio significativo (${PdfTools.formatFileSize(compressedSize)})`;
 
-      PdfTools.showToast('¡PDF comprimido exitosamente!', 'success');
-      _showCompressionSuccess(reductionText);
+      PdfTools.showToast(reductionMsg, 'success', 6000);
+      PdfTools.showDownloadSuccess(outputName, document.querySelector('.merge-button-container'), () => {
+        currentFile = null;
+        fileInput.value = '';
+        compressSection.style.display = 'none';
+        dropZone.innerHTML = ORIGINAL_DROP_ZONE_HTML;
+        PdfTools.initDropZone(dropZone, fileInput, handleFiles);
+      });
     } else {
       const msg = await PdfTools.getErrorMessage(response);
       PdfTools.showToast(msg, 'error');
@@ -71,27 +78,3 @@ compressButton.addEventListener('click', async () => {
   }
 });
 
-function _showCompressionSuccess(reductionText) {
-  document.querySelectorAll('.success-banner').forEach(b => b.remove());
-
-  const banner = document.createElement('div');
-  banner.className = 'success-banner';
-  banner.innerHTML = `
-    <div class="success-banner-icon">✅</div>
-    <div class="success-banner-text">
-      <div class="success-banner-title">¡Archivo generado exitosamente!</div>
-      <div class="success-banner-filename">${reductionText}</div>
-    </div>
-    <button class="success-banner-action" type="button">Comprimir otro</button>
-  `;
-  banner.querySelector('button').addEventListener('click', () => {
-    banner.remove();
-    currentFile = null;
-    fileInput.value = '';
-    compressSection.style.display = 'none';
-    dropZone.innerHTML = ORIGINAL_DROP_ZONE_HTML;
-    PdfTools.initDropZone(dropZone, fileInput, handleFiles);
-  });
-
-  document.querySelector('.merge-button-container').after(banner);
-}

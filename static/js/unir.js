@@ -4,7 +4,7 @@ const pdfFilesContainer = document.getElementById('pdfFilesContainer');
 const mergeButton = document.getElementById('mergeButton');
 const mainContainer = document.querySelector('.main-container');
 
-const MAX_SIZE_MB = 20;
+const MAX_SIZE_MB = 40;
 let filesArray = [];
 
 PdfTools.initDropZone(dropZone, fileInput, handleFiles);

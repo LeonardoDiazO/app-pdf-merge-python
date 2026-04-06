@@ -14,7 +14,7 @@ def err(msg, status=400):
     return jsonify({"error": msg}), status
 
 
-def validate_pdf_upload(file, max_mb=20):
+def validate_pdf_upload(file, max_mb=40):
     """Validate an uploaded PDF file. Returns (BytesIO, None) or (None, error_response)."""
     if not file or not file.filename:
         return None, err("Falta el archivo PDF")

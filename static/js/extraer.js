@@ -14,7 +14,7 @@ PdfTools.initDropZone(dropZone, fileInput, handleFiles);
 
 async function handleFiles(files) {
   const file = files[0];
-  const v = PdfTools.validatePdfFile(file, 20);
+  const v = PdfTools.validatePdfFile(file, 40);
   if (!v.valid) { PdfTools.showToast(v.error, 'error'); return; }
 
   currentFile = file;
