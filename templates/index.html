@@ -10,7 +10,7 @@
   <style>
     .hero-section {
       text-align: center;
-      padding: 3rem 1rem;
+      padding: 3rem 1rem 2rem;
       max-width: 800px;
       margin: 0 auto;
     }
@@ -32,71 +32,86 @@
       line-height: 1.8;
     }
 
+    /* ── Categorías ── */
+    .category-section {
+      margin-top: 3rem;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .category-icon { font-size: 1.5rem; }
+
+    .category-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .category-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-left: auto;
+    }
+
     .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-      margin-top: 3rem;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem;
     }
 
     .feature-card {
       background: var(--card-bg);
-      padding: 2rem;
+      padding: 1.5rem;
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-md);
       transition: all var(--transition-normal);
       border: 1px solid var(--border-color);
+      text-decoration: none;
+      display: block;
+      color: inherit;
     }
 
     .feature-card:hover {
-      transform: translateY(-5px);
+      transform: translateY(-4px);
       box-shadow: var(--shadow-xl);
+      border-color: currentColor;
     }
 
     .feature-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
+      font-size: 2.25rem;
+      margin-bottom: 0.75rem;
     }
 
     .feature-title {
-      font-size: 1.5rem;
+      font-size: 1.1rem;
       font-weight: 700;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.4rem;
       color: var(--text-primary);
     }
 
     .feature-description {
       color: var(--text-secondary);
-      line-height: 1.6;
+      line-height: 1.5;
+      font-size: 0.875rem;
     }
 
-    .cta-button {
-      display: inline-block;
-      background: var(--merge-green);
-      color: white;
-      padding: 1rem 2.5rem;
-      border-radius: var(--radius-full);
-      text-decoration: none;
-      font-weight: 700;
-      margin: 0.5rem;
-      transition: all var(--transition-normal);
-      box-shadow: var(--shadow-md);
-    }
+    /* Accent line per category */
+    .card-organizar { border-top: 3px solid #22c55e; }
+    .card-editar    { border-top: 3px solid #3b82f6; }
+    .card-convertir { border-top: 3px solid #0891b2; }
 
-    .cta-button:hover {
-      background: var(--merge-green-hover);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-    }
+    .card-organizar:hover { border-color: #22c55e; }
+    .card-editar:hover    { border-color: #3b82f6; }
+    .card-convertir:hover { border-color: #0891b2; }
 
-    .cta-button.secondary {
-      background: var(--pdf-red);
-    }
-
-    .cta-button.secondary:hover {
-      background: #b91c1c;
-    }
-
+    /* ── Info section ── */
     .info-section {
       background: var(--card-bg);
       padding: 2rem;
@@ -108,27 +123,35 @@
     .info-list {
       list-style: none;
       padding: 0;
+      columns: 2;
+      column-gap: 2rem;
+    }
+
+    @media (max-width: 600px) {
+      .info-list { columns: 1; }
+      .category-desc { display: none; }
     }
 
     .info-list li {
-      padding: 0.5rem 0;
+      padding: 0.35rem 0;
       color: var(--text-secondary);
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      break-inside: avoid;
     }
 
     .info-list li::before {
       content: '✓';
       color: var(--merge-green);
       font-weight: 700;
-      font-size: 1.25rem;
+      font-size: 1.1rem;
+      flex-shrink: 0;
     }
   </style>
 </head>
 
 <body>
-  <!-- Header -->
   <header class="app-header">
     <div class="logo-container">
       <img src="{{ url_for('static', filename='images/flask-logo.svg') }}" alt="Flask" class="logo-icon">
@@ -137,128 +160,106 @@
     </div>
   </header>
 
-  <!-- Main Container -->
   <main class="main-container">
-    <!-- Hero Section -->
+
     <section class="hero-section">
       <h1 class="hero-title">Herramientas PDF Profesionales</h1>
       <p class="hero-subtitle">
-        Combina y edita tus archivos PDF de forma rápida, segura y gratuita.
-        Todo el procesamiento se realiza en tu navegador para máxima privacidad.
+        Edita, organiza y convierte tus archivos PDF de forma rápida, segura y gratuita.
+        Todo el procesamiento es temporal — tus archivos nunca se almacenan.
       </p>
+    </section>
 
-      <div>
-        <a href="/unir" class="cta-button">Unir PDFs</a>
-        <a href="/rotar" class="cta-button" style="background: #3b82f6;">Rotar Páginas</a>
-        <a href="/extraer" class="cta-button" style="background: #a855f7;">Extraer Páginas</a>
-        <a href="/eliminar" class="cta-button secondary">Eliminar Páginas</a>
-        <a href="/paginar" class="cta-button" style="background: #f97316;">Agregar Paginación</a>
-        <a href="/imagenes" class="cta-button" style="background: #10b981;">Imágenes a PDF</a>
-        <a href="/reorganizar" class="cta-button" style="background: #8b5cf6;">Reorganizar Páginas</a>
+    <!-- ── Organizar ── -->
+    <section class="category-section">
+      <div class="category-header">
+        <span class="category-icon">🗂️</span>
+        <span class="category-title">Organizar</span>
+        <span class="category-desc">Estructura y reorganiza tus documentos</span>
+      </div>
+      <div class="features-grid">
+        <a href="/unir" class="feature-card card-organizar">
+          <div class="feature-icon">🔗</div>
+          <div class="feature-title">Unir PDFs</div>
+          <p class="feature-description">Combina múltiples archivos PDF en uno solo. Reordena fácilmente con drag & drop.</p>
+        </a>
+        <a href="/extraer" class="feature-card card-organizar">
+          <div class="feature-icon">📑</div>
+          <div class="feature-title">Extraer Páginas</div>
+          <p class="feature-description">Extrae páginas específicas a un nuevo PDF. Ideal para compartir secciones concretas.</p>
+        </a>
+        <a href="/eliminar" class="feature-card card-organizar">
+          <div class="feature-icon">🗑️</div>
+          <div class="feature-title">Eliminar Páginas</div>
+          <p class="feature-description">Elimina páginas no deseadas de tus PDFs con vista previa para mayor precisión.</p>
+        </a>
+        <a href="/reorganizar" class="feature-card card-organizar">
+          <div class="feature-icon">🔀</div>
+          <div class="feature-title">Reorganizar Páginas</div>
+          <p class="feature-description">Reordena las páginas de un PDF con drag & drop visual. Ideal tras un merge incorrecto.</p>
+        </a>
       </div>
     </section>
 
-    <!-- Features Grid -->
-    <section class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🔗</div>
-        <h3 class="feature-title">Unir PDFs</h3>
-        <p class="feature-description">
-          Combina múltiples archivos PDF en un solo documento.
-          Reordena fácilmente con drag & drop.
-        </p>
+    <!-- ── Editar ── -->
+    <section class="category-section">
+      <div class="category-header">
+        <span class="category-icon">✏️</span>
+        <span class="category-title">Editar</span>
+        <span class="category-desc">Modifica el contenido y la apariencia</span>
       </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">🔄</div>
-        <h3 class="feature-title">Rotar Páginas</h3>
-        <p class="feature-description">
-          Rota páginas de tu PDF 90°, 180° o 270°.
-          Perfecto para documentos escaneados mal orientados.
-        </p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">📑</div>
-        <h3 class="feature-title">Extraer Páginas</h3>
-        <p class="feature-description">
-          Extrae páginas específicas a un nuevo PDF.
-          Ideal para crear resúmenes o compartir secciones.
-        </p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">🗑️</div>
-        <h3 class="feature-title">Eliminar Páginas</h3>
-        <p class="feature-description">
-          Elimina páginas no deseadas de tus PDFs.
-          Vista previa incluida para mayor precisión.
-        </p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">🔢</div>
-        <h3 class="feature-title">Agregar Paginación</h3>
-        <p class="feature-description">
-          Agrega números de página a tus PDFs. Configura desde qué página numerar,
-          el número inicial y la posición. Ideal para documentos con portada.
-        </p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">🖼️</div>
-        <h3 class="feature-title">Imágenes a PDF</h3>
-        <p class="feature-description">
-          Convierte una o varias imágenes (JPG, PNG, WEBP, GIF, BMP) en un PDF.
-          Reordénalas antes de convertir.
-        </p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">🔀</div>
-        <h3 class="feature-title">Reorganizar Páginas</h3>
-        <p class="feature-description">
-          Reordena las páginas de un PDF con drag & drop visual.
-          Ideal para corregir el orden tras un merge incorrecto.
-        </p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">🔒</div>
-        <h3 class="feature-title">100% Seguro</h3>
-        <p class="feature-description">
-          Tus archivos no se almacenan en ningún servidor. Todo el procesamiento
-          es temporal y se elimina inmediatamente.
-        </p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <h3 class="feature-title">Súper Rápido</h3>
-        <p class="feature-description">
-          Procesamiento optimizado que te permite trabajar con múltiples PDFs
-          de forma eficiente y sin demoras.
-        </p>
+      <div class="features-grid">
+        <a href="/rotar" class="feature-card card-editar">
+          <div class="feature-icon">🔄</div>
+          <div class="feature-title">Rotar Páginas</div>
+          <p class="feature-description">Rota páginas 90°, 180° o 270°. Perfecto para documentos escaneados mal orientados.</p>
+        </a>
+        <a href="/paginar" class="feature-card card-editar">
+          <div class="feature-icon">🔢</div>
+          <div class="feature-title">Agregar Paginación</div>
+          <p class="feature-description">Agrega números de página con posición, formato y número de inicio configurables.</p>
+        </a>
       </div>
     </section>
 
-    <!-- Info Section -->
+    <!-- ── Convertir y optimizar ── -->
+    <section class="category-section">
+      <div class="category-header">
+        <span class="category-icon">⚙️</span>
+        <span class="category-title">Convertir y Optimizar</span>
+        <span class="category-desc">Transforma y reduce el peso de tus archivos</span>
+      </div>
+      <div class="features-grid">
+        <a href="/imagenes" class="feature-card card-convertir">
+          <div class="feature-icon">🖼️</div>
+          <div class="feature-title">Imágenes a PDF</div>
+          <p class="feature-description">Convierte JPG, PNG, WEBP, GIF y BMP en un PDF. Reordénalas antes de convertir.</p>
+        </a>
+        <a href="/comprimir" class="feature-card card-convertir">
+          <div class="feature-icon">📦</div>
+          <div class="feature-title">Comprimir PDF</div>
+          <p class="feature-description">Reduce el tamaño con 3 niveles. Ve la reducción estimada antes y la real al finalizar.</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- ── Info ── -->
     <section class="info-section">
       <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Características Principales</h3>
       <ul class="info-list">
-        <li>Combina múltiples archivos PDF en uno solo</li>
-        <li>Rota páginas con 3 ángulos diferentes (90°, 180°, 270°)</li>
-        <li>Extrae páginas específicas a nuevos documentos</li>
-        <li>Elimina páginas no deseadas con vista previa</li>
-        <li>Reordena páginas con arrastrar y soltar</li>
-        <li>Agrega paginación personalizada con múltiples formatos</li>
+        <li>Combina múltiples PDFs en uno solo</li>
+        <li>Extrae o elimina páginas con vista previa</li>
+        <li>Reorganiza páginas con arrastrar y soltar</li>
+        <li>Rota páginas en 3 ángulos diferentes</li>
+        <li>Paginación personalizada con múltiples formatos</li>
         <li>Convierte imágenes JPG, PNG, WEBP, GIF y BMP a PDF</li>
-        <li>Reorganiza páginas de un PDF con drag & drop visual</li>
-        <li>Sin límites de uso diario</li>
+        <li>Comprime PDFs con reducción real visible</li>
         <li>Compatible con todos los navegadores modernos</li>
-        <li>Totalmente gratuito y sin registro</li>
+        <li>Sin registro ni límites de uso diario</li>
+        <li>Tus archivos nunca se almacenan en el servidor</li>
       </ul>
     </section>
+
   </main>
 </body>
 

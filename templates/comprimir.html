@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comprimir PDF - PDF Tools</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <style>
+    .level-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+
+    .level-card {
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem 1rem;
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      text-align: center;
+      position: relative;
+    }
+
+    .level-card:hover {
+      border-color: #0891b2;
+      box-shadow: var(--shadow-md);
+    }
+
+    .level-card.selected {
+      border-color: #0891b2;
+      background: #ecfeff;
+    }
+
+    .level-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .level-name { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .level-desc { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+
+    .level-badge {
+      display: inline-block;
+      background: #0891b2;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius-full);
+    }
+
+    .level-card.selected .level-badge { background: #0e7490; }
+
+    .compress-note {
+      background: #f0f9ff;
+      border-left: 4px solid #0891b2;
+      padding: 0.85rem 1.25rem;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .compress-note strong { color: var(--text-primary); }
+
+    .file-info-bar {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .file-info-bar .file-name { font-weight: 600; color: var(--text-primary); }
+    .file-info-bar .file-size { color: var(--text-secondary); }
+
+    .compress-button {
+      background: #0891b2;
+      color: white;
+      border: none;
+      padding: 1.25rem 4rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      box-shadow: var(--shadow-lg);
+      text-transform: uppercase;
+    }
+
+    .compress-button:hover { background: #0e7490; box-shadow: var(--shadow-xl); transform: translateY(-2px); }
+    .compress-button:disabled { background: var(--text-secondary); cursor: not-allowed; opacity: 0.5; transform: none; }
+
+    .instructions {
+      background: #f0f9ff;
+      border-left: 4px solid #0891b2;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 2rem;
+      color: var(--text-secondary);
+    }
+
+    .result-stats {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .stat-box {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1.25rem;
+      text-align: center;
+      min-width: 130px;
+    }
+
+    .stat-label { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
+    .stat-value { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+    .stat-value.highlight { color: #0891b2; }
+  </style>
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="logo-container">
+      <img src="{{ url_for('static', filename='images/flask-logo.svg') }}" alt="Flask" class="logo-icon">
+      <img src="{{ url_for('static', filename='images/python-logo.svg') }}" alt="Python" class="logo-icon">
+    </div>
+  </header>
+
+  <main class="main-container">
+    <a href="/" class="back-link">← Volver al inicio</a>
+    <h1 class="page-title">📦 Comprimir PDF</h1>
+
+    <div class="instructions">
+      📌 Sube un PDF, elige el nivel de compresión y descarga tu archivo optimizado.
+      Se muestra la reducción estimada antes de comprimir y la reducción real al finalizar.
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-zone-icon">📄</div>
+      <div class="drop-zone-text">Click para seleccionar un archivo PDF</div>
+      <div class="drop-zone-subtext">O arrastra y suelta aquí</div>
+      <div class="drop-zone-steps">
+        <span>1. Sube</span><span> → </span><span>2. Elige nivel</span><span> → </span><span>3. Descarga</span>
+      </div>
+    </div>
+
+    <input type="file" id="fileInput" class="file-input-hidden" accept="application/pdf">
+
+    <div id="compressSection" style="display: none;">
+
+      <div class="file-info-bar" id="fileInfoBar">
+        <span class="file-name" id="fileName"></span>
+        <span class="file-size" id="fileSize"></span>
+      </div>
+
+      <h3 style="text-align:center; margin-bottom: 0.75rem; color: var(--text-primary);">
+        Elige el nivel de compresión
+      </h3>
+
+      <div class="compress-note">
+        <strong>Nota sobre la reducción estimada:</strong> Los porcentajes son rangos típicos.
+        PDFs con muchas imágenes se comprimen mucho más. PDFs de texto puro tienen menor reducción.
+      </div>
+
+      <div class="level-grid">
+        <div class="level-card" data-level="leve">
+          <div class="level-icon">🪶</div>
+          <div class="level-name">Leve</div>
+          <div class="level-desc">Solo optimiza la estructura interna del PDF. Las imágenes no se tocan.</div>
+          <span class="level-badge">Estimado: 5–15%</span>
+        </div>
+        <div class="level-card selected" data-level="media">
+          <div class="level-icon">⚖️</div>
+          <div class="level-name">Media</div>
+          <div class="level-desc">Recomprime imágenes con calidad aceptable. Balance entre tamaño y calidad visual.</div>
+          <span class="level-badge">Estimado: 20–50%</span>
+        </div>
+        <div class="level-card" data-level="agresiva">
+          <div class="level-icon">💪</div>
+          <div class="level-name">Agresiva</div>
+          <div class="level-desc">Máxima reducción. Las imágenes pierden calidad notablemente.</div>
+          <span class="level-badge">Estimado: 40–70%</span>
+        </div>
+      </div>
+
+      <div class="merge-button-container">
+        <button class="compress-button" id="compressButton">
+          Comprimir PDF
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/pdf-tools.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/comprimir.js') }}"></script>
+</body>
+
+</html>
