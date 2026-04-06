@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, send_file
 from PIL import Image, UnidentifiedImageError
 from extensions import limiter
-from utils import err, validate_pdf_upload, open_pdf
+from utils import err, validate_pdf_upload
 import pikepdf
 import io
 import os
@@ -86,7 +86,7 @@ def imagenes():
             return send_file(
                 output_stream,
                 as_attachment=True,
-                download_name="images_output.pdf",
+                download_name="images-to-pdf.pdf",
                 mimetype='application/pdf',
             )
 
@@ -176,26 +176,24 @@ def comprimir():
                 output_stream,
                 compress_streams=True,
                 object_stream_mode=pikepdf.ObjectStreamMode.generate,
-                recompress_flate=True,
             )
             output_stream.seek(0)
 
             compressed_size = len(output_stream.getvalue())
             reduction = round((1 - compressed_size / original_size) * 100, 1)
 
+            original_filename = pdf_file.filename or 'documento.pdf'
+            output_filename = f"compress-{original_filename}"
+
             logger.info(
                 f"Compressed PDF [{level}]: {original_size} → {compressed_size} bytes "
                 f"({reduction}% reduction)"
             )
 
-            original_filename = pdf_file.filename if getattr(pdf_file, 'filename', None) else 'documento.pdf'
-            name_base, ext = os.path.splitext(original_filename)
-            safe_name = f"{name_base}_comprimido{ext}"
-
             response = send_file(
                 output_stream,
                 as_attachment=True,
-                download_name=safe_name,
+                download_name=output_filename,
                 mimetype='application/pdf',
             )
             response.headers['X-Original-Size'] = str(original_size)
@@ -204,9 +202,7 @@ def comprimir():
             return response
 
         except Exception as e:
-            import traceback
-            error_trace = traceback.format_exc()
-            logger.error(f"Unexpected error in compression: {e}\n{error_trace}")
-            return err(f"Error 500 detellado: {error_trace}", 500)
+            logger.error(f"Unexpected error in compression: {e}")
+            return err("Error inesperado al comprimir el PDF", 500)
 
     return render_template('comprimir.html')
