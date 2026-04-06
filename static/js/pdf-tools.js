@@ -17,8 +17,15 @@ const PdfTools = (() => {
     return _toastContainer;
   }
 
+  function _clearToasts() {
+    if (_toastContainer) {
+      _toastContainer.querySelectorAll('.toast').forEach(t => t.remove());
+    }
+  }
+
   function showToast(message, type = 'success', duration = 4500) {
     const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+    _clearToasts();
     const container = _getToastContainer();
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
@@ -29,6 +36,7 @@ const PdfTools = (() => {
       if (toast.classList.contains('removing')) return;
       toast.classList.add('removing');
       toast.addEventListener('animationend', () => toast.remove(), { once: true });
+      setTimeout(() => toast.remove(), 400);
     };
     toast.addEventListener('click', remove);
     setTimeout(remove, duration);
@@ -57,11 +65,16 @@ const PdfTools = (() => {
 
   // ── Drop Zone ─────────────────────────────────────────────────────────────
 
+  function _resetMessages() {
+    _clearToasts();
+    document.querySelectorAll('.success-banner').forEach(b => b.remove());
+  }
+
   function initDropZone(dropZoneEl, fileInputEl, onFilesSelected) {
     dropZoneEl.addEventListener('click', () => fileInputEl.click());
 
     fileInputEl.addEventListener('change', (e) => {
-      if (e.target.files.length) onFilesSelected(e.target.files);
+      if (e.target.files.length) { _resetMessages(); onFilesSelected(e.target.files); }
     });
 
     dropZoneEl.addEventListener('dragover', (e) => {
@@ -78,7 +91,7 @@ const PdfTools = (() => {
     dropZoneEl.addEventListener('drop', (e) => {
       e.preventDefault();
       dropZoneEl.classList.remove('drag-over');
-      if (e.dataTransfer.files.length) onFilesSelected(e.dataTransfer.files);
+      if (e.dataTransfer.files.length) { _resetMessages(); onFilesSelected(e.dataTransfer.files); }
     });
   }
 
@@ -207,10 +220,9 @@ const PdfTools = (() => {
       </div>
       <button class="success-banner-action" type="button">Procesar otro</button>
     `;
-    banner.querySelector('button').addEventListener('click', () => {
-      banner.remove();
-      if (onReset) onReset();
-    });
+    const dismiss = () => { banner.remove(); if (onReset) onReset(); };
+    banner.querySelector('button').addEventListener('click', dismiss);
+    setTimeout(dismiss, 8000);
     anchorEl.after(banner);
   }
 
