@@ -89,9 +89,10 @@ rotateButton.addEventListener('click', async () => {
 
     if (response.ok) {
       const blob = await response.blob();
-      PdfTools.downloadBlob(blob, 'rotated_output.pdf');
+      const outputName = `rotate-${currentFile.name}`;
+      PdfTools.downloadBlob(blob, outputName);
       PdfTools.showToast('¡Páginas rotadas exitosamente!', 'success');
-      PdfTools.showDownloadSuccess('rotated_output.pdf', document.querySelector('.merge-button-container'), () => {
+      PdfTools.showDownloadSuccess(outputName, document.querySelector('.merge-button-container'), () => {
         currentFile = null;
         pageState = null;
         previewGrid.innerHTML = '';

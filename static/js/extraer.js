@@ -67,9 +67,10 @@ extractButton.addEventListener('click', async () => {
 
     if (response.ok) {
       const blob = await response.blob();
-      PdfTools.downloadBlob(blob, 'extracted_output.pdf');
+      const outputName = `extract-${currentFile.name}`;
+      PdfTools.downloadBlob(blob, outputName);
       PdfTools.showToast('¡Páginas extraídas exitosamente!', 'success');
-      PdfTools.showDownloadSuccess('extracted_output.pdf', document.querySelector('.merge-button-container'), () => {
+      PdfTools.showDownloadSuccess(outputName, document.querySelector('.merge-button-container'), () => {
         currentFile = null;
         pageState = null;
         previewGrid.innerHTML = '';

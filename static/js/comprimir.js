@@ -52,7 +52,7 @@ compressButton.addEventListener('click', async () => {
       const reduction     = parseFloat(response.headers.get('X-Reduction-Percent') || '0');
 
       const blob = await response.blob();
-      PdfTools.downloadBlob(blob, 'compressed_output.pdf');
+      PdfTools.downloadBlob(blob, `compress-${currentFile.name}`);
 
       const reductionText = reduction > 0
         ? `Se redujo un <strong>${reduction}%</strong> (${PdfTools.formatFileSize(originalSize)} → ${PdfTools.formatFileSize(compressedSize)})`

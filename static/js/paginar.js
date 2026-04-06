@@ -133,9 +133,10 @@ paginateBtn.addEventListener('click', async () => {
 
     if (response.ok) {
       const blob = await response.blob();
-      PdfTools.downloadBlob(blob, 'paginated_output.pdf');
+      const outputName = `paginate-${currentFile.name}`;
+      PdfTools.downloadBlob(blob, outputName);
       PdfTools.showToast('¡Paginación agregada exitosamente!', 'success');
-      PdfTools.showDownloadSuccess('paginated_output.pdf', document.querySelector('.merge-button-container'), () => {
+      PdfTools.showDownloadSuccess(outputName, document.querySelector('.merge-button-container'), () => {
         currentFile = null;
         fileInput.value = '';
         configSection.style.display = 'none';

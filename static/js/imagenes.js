@@ -168,9 +168,10 @@ convertButton.addEventListener('click', async () => {
 
     if (response.ok) {
       const blob = await response.blob();
-      PdfTools.downloadBlob(blob, 'images_output.pdf');
+      const outputName = `images-to-pdf.pdf`;
+      PdfTools.downloadBlob(blob, outputName);
       PdfTools.showToast('¡Imágenes convertidas exitosamente!', 'success');
-      PdfTools.showDownloadSuccess('images_output.pdf', document.querySelector('.merge-button-container'), () => {
+      PdfTools.showDownloadSuccess(outputName, document.querySelector('.merge-button-container'), () => {
         imagesArray = [];
         fileInput.value = '';
         renderImages();

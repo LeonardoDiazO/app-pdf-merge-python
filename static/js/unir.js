@@ -100,9 +100,10 @@ mergeButton.addEventListener('click', async () => {
 
     if (response.ok) {
       const blob = await response.blob();
-      PdfTools.downloadBlob(blob, 'merged_output.pdf');
+      const outputName = `merge-${filesArray[0].name}`;
+      PdfTools.downloadBlob(blob, outputName);
       PdfTools.showToast('¡PDFs unidos exitosamente!', 'success');
-      PdfTools.showDownloadSuccess('merged_output.pdf', document.querySelector('.merge-button-container'), () => {
+      PdfTools.showDownloadSuccess(outputName, document.querySelector('.merge-button-container'), () => {
         filesArray = [];
         fileInput.value = '';
         renderFiles();

@@ -67,9 +67,10 @@ deleteButton.addEventListener('click', async () => {
 
     if (response.ok) {
       const blob = await response.blob();
-      PdfTools.downloadBlob(blob, 'cleaned_output.pdf');
+      const outputName = `delete-${currentFile.name}`;
+      PdfTools.downloadBlob(blob, outputName);
       PdfTools.showToast('¡Páginas eliminadas exitosamente!', 'success');
-      PdfTools.showDownloadSuccess('cleaned_output.pdf', document.querySelector('.merge-button-container'), () => {
+      PdfTools.showDownloadSuccess(outputName, document.querySelector('.merge-button-container'), () => {
         currentFile = null;
         pageState = null;
         previewGrid.innerHTML = '';
