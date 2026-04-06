@@ -9,12 +9,14 @@ const ORIGINAL_DROP_ZONE_HTML = dropZone.innerHTML;
 
 let currentFile = null;
 let selectedLevel = 'media';
+let selectedMaxMb = 30;
 
 document.querySelectorAll('.level-card').forEach(card => {
   card.addEventListener('click', () => {
     document.querySelectorAll('.level-card').forEach(c => c.classList.remove('selected'));
     card.classList.add('selected');
     selectedLevel = card.dataset.level;
+    selectedMaxMb = parseInt(card.dataset.maxMb || '40', 10);
   });
 });
 
@@ -22,7 +24,7 @@ PdfTools.initDropZone(dropZone, fileInput, handleFiles);
 
 function handleFiles(files) {
   const file = files[0];
-  const v = PdfTools.validatePdfFile(file, 40);
+  const v = PdfTools.validatePdfFile(file, selectedMaxMb);
   if (!v.valid) { PdfTools.showToast(v.error, 'error'); return; }
 
   currentFile = file;
@@ -35,6 +37,9 @@ function handleFiles(files) {
 
 compressButton.addEventListener('click', async () => {
   if (!currentFile) return;
+
+  const v = PdfTools.validatePdfFile(currentFile, selectedMaxMb);
+  if (!v.valid) { PdfTools.showToast(v.error, 'error'); return; }
 
   document.querySelectorAll('.success-banner').forEach(b => b.remove());
   PdfTools.setButtonLoading(compressButton, 'Comprimiendo...');

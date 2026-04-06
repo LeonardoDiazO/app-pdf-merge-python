@@ -100,9 +100,9 @@ def imagenes():
 # ── Comprimir ─────────────────────────────────────────────────────────────────
 
 COMPRESSION_LEVELS = {
-    'leve':     {'quality': None, 'label': 'Leve'},
-    'media':    {'quality': 60,   'label': 'Media'},
-    'agresiva': {'quality': 35,   'label': 'Agresiva'},
+    'leve':     {'quality': None, 'label': 'Leve',     'max_mb': 40},
+    'media':    {'quality': 60,   'label': 'Media',    'max_mb': 30},
+    'agresiva': {'quality': 35,   'label': 'Agresiva', 'max_mb': 20},
 }
 
 
@@ -148,7 +148,8 @@ def comprimir():
             if level not in COMPRESSION_LEVELS:
                 return err("Nivel de compresión inválido")
 
-            stream, error = validate_pdf_upload(pdf_file, max_mb=40)
+            level_cfg = COMPRESSION_LEVELS[level]
+            stream, error = validate_pdf_upload(pdf_file, max_mb=level_cfg['max_mb'])
             if error:
                 return error
 
@@ -166,7 +167,7 @@ def comprimir():
             if len(pdf.pages) == 0:
                 return err("El PDF no tiene páginas")
 
-            jpeg_quality = COMPRESSION_LEVELS[level]['quality']
+            jpeg_quality = level_cfg['quality']
             if jpeg_quality is not None:
                 for page in pdf.pages:
                     _recompress_page_images(page, jpeg_quality)
