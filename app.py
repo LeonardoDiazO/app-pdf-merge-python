@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'supersecretkey-change-in-production')
-app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
+app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024  # 20 MB
 
 limiter.init_app(app)
 

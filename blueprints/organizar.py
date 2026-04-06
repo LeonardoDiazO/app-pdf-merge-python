@@ -83,7 +83,7 @@ def extraer():
             pdf_file = request.files.get('pdf')
             pages_str = request.form.get('extract_pages', '')
 
-            stream, error = validate_pdf_upload(pdf_file, max_mb=10)
+            stream, error = validate_pdf_upload(pdf_file, max_mb=20)
             if error:
                 return error
 
@@ -139,7 +139,7 @@ def eliminar():
             pdf_file = request.files.get('pdf')
             pages_str = request.form.get('remove_pages', '')
 
-            stream, error = validate_pdf_upload(pdf_file, max_mb=5)
+            stream, error = validate_pdf_upload(pdf_file, max_mb=20)
             if error:
                 return error
 
@@ -198,7 +198,7 @@ def reorganizar():
             pdf_file = request.files.get('pdf')
             order_str = request.form.get('page_order', '')
 
-            stream, error = validate_pdf_upload(pdf_file, max_mb=10)
+            stream, error = validate_pdf_upload(pdf_file, max_mb=20)
             if error:
                 return error
 

@@ -30,7 +30,7 @@ def rotar():
             if rotation not in [90, 180, 270]:
                 return err("Ángulo de rotación inválido")
 
-            stream, error = validate_pdf_upload(pdf_file, max_mb=10)
+            stream, error = validate_pdf_upload(pdf_file, max_mb=20)
             if error:
                 return error
 
@@ -158,7 +158,7 @@ def paginar():
             if start_number < 1:
                 return err("El número inicial debe ser mayor que 0")
 
-            stream, error = validate_pdf_upload(pdf_file, max_mb=10)
+            stream, error = validate_pdf_upload(pdf_file, max_mb=20)
             if error:
                 return error
 

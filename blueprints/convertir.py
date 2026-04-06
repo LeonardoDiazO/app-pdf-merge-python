@@ -24,7 +24,7 @@ def imagenes():
                 return err("No se han subido imágenes")
 
             MAX_IMAGES = 20
-            MAX_IMAGE_MB = 10
+            MAX_IMAGE_MB = 20
             ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'}
 
             if len(files) > MAX_IMAGES:
@@ -148,7 +148,7 @@ def comprimir():
             if level not in COMPRESSION_LEVELS:
                 return err("Nivel de compresión inválido")
 
-            stream, error = validate_pdf_upload(pdf_file, max_mb=10)
+            stream, error = validate_pdf_upload(pdf_file, max_mb=20)
             if error:
                 return error
 
