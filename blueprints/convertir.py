@@ -204,7 +204,9 @@ def comprimir():
             return response
 
         except Exception as e:
-            logger.error(f"Unexpected error in compression: {e}")
-            return err("Error inesperado al comprimir el PDF", 500)
+            import traceback
+            error_trace = traceback.format_exc()
+            logger.error(f"Unexpected error in compression: {e}\n{error_trace}")
+            return err(f"Error 500 detellado: {error_trace}", 500)
 
     return render_template('comprimir.html')
