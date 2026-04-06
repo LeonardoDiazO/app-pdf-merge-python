@@ -3,7 +3,7 @@ const fileInput = document.getElementById('fileInput');
 const imagesContainer = document.getElementById('imagesContainer');
 const convertButton = document.getElementById('convertButton');
 
-const MAX_SIZE_MB = 10;
+const MAX_SIZE_MB = 20;
 const MAX_IMAGES = 20;
 const ALLOWED_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp'];

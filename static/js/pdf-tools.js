@@ -41,7 +41,7 @@ const PdfTools = (() => {
     return kb > 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${kb.toFixed(1)} KB`;
   }
 
-  function validatePdfFile(file, maxSizeMB = 10) {
+  function validatePdfFile(file, maxSizeMB = 20) {
     if (!file) return { valid: false, error: 'No se seleccionó ningún archivo' };
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
       return { valid: false, error: 'El archivo debe ser un PDF' };
