@@ -176,7 +176,7 @@ def comprimir():
             pdf.save(
                 output_stream,
                 compress_streams=True,
-                object_stream_mode=pikepdf.ObjectStreamMode.generate,
+                object_stream_mode=pikepdf.ObjectStreamMode.preserve,
             )
             output_stream.seek(0)
 
